@@ -1,0 +1,22 @@
+#+TITLE: Random Access Stored Procedure Machine
+
+This is a small Python3 application that implements the Random access
+stored procedure machine, as designed by Cook & Reckhow in
+1973 [fn:cook1973]. I developed this as a companion tool for a course
+in algorithm & data structure, where it helps (I hope) to with
+understanding computation models, growth orders and the applicability
+of the Big-O notation.
+
+* Overview
+
+* Assembly Syntax
+
+* Using RASP
+
+* Instruction Cost Models
+
+  
+
+[fn:cook1973] Cook, Stephen A., and Robert A. Reckhow. "Time bounded
+random access machines." Journal of Computer and System Sciences 7,
+no. 4 (1973): 354-375. [[https://doi.org/10.1016/S0022-0000(73)80029-7][DOI]]
