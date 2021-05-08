@@ -1,4 +1,5 @@
 #+TITLE: Random Access Stored Procedure Machine
+#+AUTHOR: Franck Chauvel
 
 This is a small Python3 application that implements the Random access
 stored procedure machine, as designed by Cook & Reckhow in
@@ -7,10 +8,68 @@ in algorithm & data structure, where it helps (I hope) to with
 understanding computation models, growth orders and the applicability
 of the Big-O notation.
 
-* Overview
+* Example: Multiplying Two Numbers
+
+#+begin_src asm
+;; Read two numbers on from the input device, multiply them and return
+;; the result on the output device.
+
+segment: data
+                left    1       0       ; the left operand 501
+                right   1       0       ; the right operand 502
+                counter 1       0       ; counter 503
+                result  1       0       ; the result 5+4
+
+segment: code
+                read            left    ; left
+                read            right   ; right
+        loop:   load            0       ;
+                add             counter
+                subtract        right   ;
+                jump            done    ; if counter - right >= 0, goto done
+                load            0
+                add             result
+                add             left
+                store           result  ; result += left
+                load            1
+                add             counter
+                store           counter ; counter += 1
+                load            0
+                jump            loop    ; goto loop
+        done:   print           result
+                halt            -1
+#+end_src
+
+This code cannot be directly run on the RASP machine. To do so, we
+need to produce an "executable", that is a sequence of integer that
+we can then load into memory. Provided we save the code above in a
+file named ~multiplication.asm~, we can assemble it into such a "RASP
+executable" file using:
+
+#+begin_src console
+$ rasp assemble samples/multiplication.asm
+#+end_src
+
+This yields a file named ~multiplication.rx~ that contains a sequence
+of integer that we can now load into our RASP machine and run.
+
+#+begin_src
+2 32 2 33 8 0 3 34 5 33 6 30 8 0 3 35 3 32 4 35 8 1 3 34 4 34 8 0 6 4 1 35 0 0 0 0
+#+end_src
+
+To run this file, we simply invoke ~rasp execute~ as follows.
+#+begin_src console
+$ rasp execute multiplication.rx
+rasp? 10
+rasp? 20
+200
+---
+Time: 268 cycle(s)
+Memory: 36 cell(s)
+#+end_src
 
 * Assembly Syntax
-
+  
 * Using RASP
 
 * Instruction Cost Models
