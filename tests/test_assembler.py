@@ -53,6 +53,21 @@ class AssemblyCodeParsingTests(TestCase):
         )
         self.assertEqual(expected, program)
 
+    def test_single_negative_integers(self):
+        parser = AssemblyParser()
+
+        program = parser.parse("segment: code\n"
+                               "          load  -12\n")
+
+        expected = AssemblyProgram(
+            data=[],
+            code=[
+                Operation("load", -12)
+            ]
+        )
+        self.assertEqual(expected, program)
+
+
     def test_single_code_segment_with_label(self):
         parser = AssemblyParser()
 

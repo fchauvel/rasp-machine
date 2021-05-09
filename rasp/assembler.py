@@ -130,7 +130,11 @@ class Assembler:
 
     def _find_address(self, program, symbol):
         if symbol not in self._symbol_table:
-            raise RuntimeError(f"Unknown symbol '{symbol}'!")
+            message = (
+                f"Error: Unknown symbol '{symbol}'!\n"
+                f"Candidates are: {self._symbol_table.keys()}\n"
+            )
+            raise RuntimeError(message)
         return self._symbol_table[symbol].address
 
 
@@ -148,7 +152,7 @@ class AssemblyParser:
 
         identifier = pp.Word(pp.alphas, pp.alphanums + '_')
 
-        integer = pp.Word(pp.nums)\
+        integer = pp.Combine(pp.Optional(pp.Char("-+")) + pp.Word(pp.nums))\
                     .setParseAction(lambda t: int(t[0]))
 
         declaration = (
