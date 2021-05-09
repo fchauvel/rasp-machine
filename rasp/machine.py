@@ -255,6 +255,11 @@ class InstructionSet:
                 return instruction.CODE
         raise RuntimeError("Unknown operation")
 
+    def find_mnemonic(self, opcode):
+        if opcode not in self._instructions:
+            return Halt.MNEMONIC
+        return self._instructions[opcode].MNEMONIC
+
     def read_from(self, machine):
         address = machine.cpu.instruction_pointer
         code = machine.memory.read(address)
@@ -277,9 +282,16 @@ class RASP:
     def run(self):
         self._is_running = True
         while self._is_running:
-            instruction = self.instructions.read_from(self)
-            logging.debug(f"{instruction} {self.cpu}")
-            instruction.send_to(self)
+            self.run_one_cycle()
+
+    def run_one_cycle(self):
+        instruction = self.instructions.read_from(self)
+        logging.debug(f"{instruction} {self.cpu}")
+        instruction.send_to(self)
+
+    @property
+    def next_instruction(self):
+        return self.instructions.read_from(self)
 
     def halt(self):
         self._is_running = False
