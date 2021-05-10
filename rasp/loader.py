@@ -8,18 +8,23 @@
 #
 
 
+from rasp.assembler import ProgramMap
+
 from io import StringIO
 
 
 class Loader:
 
+    NO_LABEL = "?"
 
     def from_text(self, memory, text):
-        self.from_stream(memory, StringIO(text))
+        return self.from_stream(memory, StringIO(text))
 
     def from_stream(self, memory, stream):
+        content = stream.read().split()
+        code_length = int(content[0])
         address = 0
-        for any_cell in stream.read().split():
+        for any_cell in content[1:code_length+1]:
             if any_cell:
                 try:
                     memory.write(address, int(any_cell))
@@ -27,3 +32,23 @@ class Loader:
                 except ValueError as error:
                     raise RuntimeError(f"Unable to read Cell {address}: "
                                        f"Expected an integer, but found {any_cell}")
+
+        index = code_length + 1
+        if len(content) <= code_length + 1:
+            return None
+        return self._read_debug_infos(content[code_length+1:])
+
+
+    def _read_debug_infos(self, content):
+        debug_infos = ProgramMap()
+        count = int(content[0])
+        index = 1
+        while index < len(content):
+            line_number = int(content[index])
+            memory_address = int(content[index + 1])
+            label = content[index + 2]
+            if label == self.NO_LABEL:
+                label = None
+            debug_infos.record(line_number, memory_address, label)
+            index += 3
+        return debug_infos

@@ -17,6 +17,22 @@ from unittest import TestCase
 
 
 
+class SymbolTableTests(TestCase):
+
+
+    def test_finding_address(self):
+        pass
+
+    def test_finding_source(instruction_address):
+        # Should store the instruction address, when we calculate it.
+        # No!! Symbol tables only contains the symbols (i.e., either
+        # labels or variable, and the address where they have beem
+        # declared)
+
+
+        pass
+
+
 class AssemblyCodeParsingTests(TestCase):
 
 
@@ -137,17 +153,24 @@ class AssemblerTests(TestCase):
     def test_using_declared_variable(self):
         program = AssemblyProgram(
             data=[
-                Declaration("my_variable", 1, 23)
+                Declaration("my_variable", 1, 23, location=2)
             ],
             code=[
-                Operation("add", "my_variable")
+                Operation("add", "my_variable", location=5)
             ]
         )
 
         layout = self.assembler.assemble(program)
 
-        self.assertEqual(2 * 1 + 1, len(layout))
-        self.assertEqual(2 * 1, layout[1])
+        expected = [
+            1 * 2 + 1,
+            Add.CODE, 2,
+            23,
+            2 * 3,
+            5, 0, "?",
+            2, 2, "my_variable"
+        ]
+        self.assertEqual(expected, layout)
 
 
     def test_using_undeclared_variable(self):
@@ -181,9 +204,9 @@ class AssemblerTests(TestCase):
         program = AssemblyProgram(
             data=[],
             code=[
-                Operation("jump", "nowehere"),
-                Operation("load", 0),
-                Operation("add", 10, label="destination")
+                Operation("jump", "nowehere", location=1),
+                Operation("load", 0, location=2),
+                Operation("add", 10, label="destination", location=3)
             ]
         )
 
@@ -194,34 +217,46 @@ class AssemblerTests(TestCase):
         program = AssemblyProgram(
             data=[],
             code=[
-                Operation("jump", "destination"),
-                Operation("load", 0),
-                Operation("add", 10, label="destination")
+                Operation("jump", "destination", location=1),
+                Operation("load", 0, location=2),
+                Operation("add", 10, label="destination", location=3)
             ]
         )
 
         layout = self.assembler.assemble(program)
 
-        self.assertEqual(2 * 3, len(layout))
-        self.assertEqual(4, layout[1])
+
+        expected = [
+            1 + 3 * 2,
+            Read.CODE, 10,
+            Load.CODE, 0,
+            3 * 3,
+            1, 0, "?",
+            2, 2, "?",
+            3, 4, "destination"
+        ]
 
 
     def test_without_label(self):
         program = AssemblyProgram(
             data=[],
             code=[
-                Operation("read", 10),
-                Operation("load", 0)
-            ]
+                Operation("read", 10, location=5),
+                Operation("load", 0, location=6)
+           ]
         )
 
         layout = self.assembler.assemble(program)
 
-        self.assertEqual(2 * 2, len(layout))
-        self.assertEqual(Read.CODE, layout[0])
-        self.assertEqual(10, layout[1])
-        self.assertEqual(Load.CODE, layout[2])
-        self.assertEqual(0, layout[3])
+        expected = [
+            2 * 2,
+            Read.CODE, 10,
+            Load.CODE, 0,
+            2 * 3,
+            5, 0, "?",
+            6, 2, "?"
+        ]
+        self.assertEqual(expected, layout)
 
 
 
@@ -248,13 +283,29 @@ class EndToEndTests(TestCase):
         assembler = Assembler()
         layout = assembler.assemble(program)
 
-        expected = [ Load.CODE, 0,
-                     Read.CODE, 16,
-                     Add.CODE, 16,
-                     Read.CODE, 16,
-                     Add.CODE, 16,
-                     Store.CODE, 17,
-                     Print.CODE, 17,
-                     Halt.CODE, 0,
-                     10, 20, 20]
+        expected = [
+            8 * 2 + 1 + 2,
+            Load.CODE, 0,
+            Read.CODE, 16,
+            Add.CODE, 16,
+            Read.CODE, 16,
+            Add.CODE, 16,
+            Store.CODE, 17,
+            Print.CODE, 17,
+            Halt.CODE, 0,
+            10,
+            20,
+            20,
+            3 * 10,
+            5, 0, "start",
+            6, 2, "?",
+            7, 4, "?",
+            8, 6, "?",
+            9, 8, "?",
+            10, 10, "?",
+            11, 12, "?",
+            12, 14, "?",
+            2, 16, "value",
+            3, 17, "result"
+        ]
         self.assertEqual(expected, layout)

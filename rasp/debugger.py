@@ -18,9 +18,10 @@ class DebugUI:
 class Debugger:
 
 
-    def __init__(self, machine, ui=None):
+    def __init__(self, machine, ui=None, program_map=None):
         self._machine = machine
         self._ui = ui or DebugUI()
+        self._map = program_map
         self._breakpoints = set()
 
     def set_instruction_pointer(self, address):
@@ -49,6 +50,14 @@ class Debugger:
             address += 1
         self._ui.show_memory(view)
 
+    def show_symbol(self, symbol):
+        try:
+            address = self._map.find_address(symbol)
+            self.show_memory(address, address+1)
+
+        except RuntimeError as error:
+            ui.report_error(error)
+
     def resume(self):
         while self._machine.cpu.instruction_pointer not in self._breakpoints:
             self._machine.run_one_cycle()
@@ -66,6 +75,8 @@ class Debugger:
     @staticmethod
     def parse_command(text):
         import pyparsing as pp
+
+        identifier = pp.Word(pp.alphas, pp.alphanums + '_')
 
         integer = pp.Combine(
             pp.Optional(pp.Char("-+")) + pp.Word(pp.nums)
@@ -107,10 +118,14 @@ class Debugger:
             pp.Suppress("show") + pp.Suppress("cpu")
         ).setParseAction(lambda tokens: ShowCPU())
 
+        show_symbol = (
+            pp.Suppress("show") + identifier
+        ).setParseAction(lambda tokens: ShowSymbol(tokens[0]))
+
         command = (
             set_ip | set_acc | set_mem \
             | break_at | step | stop \
-            | show_mem | show_cpu
+            | show_mem | show_cpu | show_symbol
         )
 
         return command.parseString(text)[0]
@@ -200,7 +215,22 @@ class ShowMemory(Command):
         if not isinstance(other, ShowMemory):
             return False
         return self._start == other._start \
-            and self._end == self._end
+        and self._end == self._end
+
+
+class ShowSymbol(Command):
+
+    def __init__(self, symbol):
+        super().__init__()
+        self._symbol = symbol
+
+    def send_to(self, debugger):
+        debugger.show_symbol(self._symbol)
+
+    def __eq__(self, other):
+        if not isinstance(other, ShowSymbol):
+            return False
+        return self._symbol == other._symbol
 
 
 class ShowCPU(Command):

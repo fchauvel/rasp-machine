@@ -11,7 +11,7 @@
 import logging
 
 from rasp.debugger import Debugger
-from rasp.assembler import Assembler, AssemblyParser
+from rasp.assembler import Assembler, AssemblyParser, ProgramMap
 from rasp.loader import Loader
 from rasp.machine import RASP, Profiler
 
@@ -23,24 +23,22 @@ from sys import argv
 class CLI:
 
     def show_memory(self, view):
-        headers = ("address:", "as value", "as instruction")
-
-        print(f"{headers[0]:>10} {headers[1]:>10} {headers[2]:>20}")
-        for address, value, mnemonic in view:
-            print(f"{address:>10}: {value:>10} {mnemonic:>20}")
-
+        self._format(f"   \u2514\u2500 Memory:")
+        for index, (address, value, mnemonic) in enumerate(view):
+            marker = "\u251C" if index < len(view) - 1 else "\u2514"
+            self._format(f"       {marker}\u2500{address:>5}: {value:>5} - {mnemonic:<20}")
 
     def show_cpu(self, view):
-        self._format(f"- CPU:")
-        self._format(f"   - ACC: {view[0]:>6}")
-        self._format(f"   -  IP: {view[1]:0>6} ~ {view[2]}")
+        self._format(f"   \u2514\u2500 CPU:")
+        self._format(f"       \u251C\u2500 ACC: {view[0]:>6}")
+        self._format(f"       \u2514\u2500  IP: {view[1]:0>6} ~ {view[2]}")
 
 
     def show_instruction(self, instruction):
-        self._format(f"- RUN: {instruction}")
+        self._format(f"   \u2514\u2500 RUN: {instruction}")
 
     def _format(self, text):
-        print(" | " + text)
+        print(" \u2502" + text)
 
 
 def assemble(assembly_file):
@@ -61,12 +59,12 @@ def debug(executable_file):
     profiler = Profiler()
     machine.cpu.attach(profiler)
     machine.memory.attach(profiler)
-    debugger = Debugger(machine, CLI())
+
     with open(executable_file, "r") as code:
-        load = Loader()
-        load.from_stream(machine.memory, code)
+        debug_infos = Loader().from_stream(machine.memory, code)
+        debugger = Debugger(machine, CLI(), debug_infos)
         while True:
-            print(" + debug > ", end="")
+            print(" \u253C debug > ", end="")
             user_input = input()
             command = Debugger.parse_command(user_input)
             if command.is_quit():

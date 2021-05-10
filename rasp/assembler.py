@@ -12,12 +12,13 @@ from rasp.machine import InstructionSet
 
 
 
-class Declaration(object):
+class Declaration:
 
-    def __init__(self, label, size=1, initial_value=0):
+    def __init__(self, label, size=1, initial_value=0, location=None):
         self.label = label
         self.reserved_size = size
         self.initial_value = initial_value
+        self.location = location
 
     def __eq__(self, other):
         if not isinstance(other, Declaration):
@@ -35,14 +36,11 @@ class Declaration(object):
 
 class Operation:
 
-    def __init__(self, mnemonic, operand, label=None):
+    def __init__(self, mnemonic, operand, label=None, location=None):
         self.mnemonic = mnemonic
         self.operand = operand
         self.label = label
-
-    @property
-    def is_labelled(self):
-        return self.label is not None
+        self.location = location
 
     def __eq__(self, other):
         if not isinstance(other, Operation):
@@ -56,7 +54,6 @@ class Operation:
         print(result)
         return result
 
-
     def __repr__(self):
         return f"Operation({self.mnemonic}, {self.operand}, {self.label})"
 
@@ -66,6 +63,11 @@ class AssemblyProgram:
     def __init__(self, data, code):
         self.code = code
         self.data = data
+
+    @property
+    def size(self):
+        return 2 * len(self.code) + sum(variable.reserved_size
+                                        for variable in self.data)
 
     def __eq__(self, other):
         if not isinstance(other, AssemblyProgram):
@@ -77,69 +79,97 @@ class AssemblyProgram:
         return repr(self.__dict__)
 
 
-class Symbol:
+class ProgramMap:
 
-    def __init__(self, label, address):
-        self.label = label
-        self.address = address
+    @staticmethod
+    def read_from(stream):
+        program_map = ProgramMap()
+        content = stream.read().splitlines()
+        print(content)
+        for each_line in content:
+            parts = each_line.split()
+            print("DBG", parts)
+            if len(parts) == 3:
+                program_map.record(int(parts[0]), int(parts[1]), parts[2])
+            else:
+                program_map.record(int(parts[0]), int(parts[1]))
+        return program_map
 
+    @staticmethod
+    def create_from(program):
+        program_map = ProgramMap()
+        address = 0
+        for each_instruction in program.code:
+            program_map.record(each_instruction.location,
+                               address,
+                               each_instruction.label)
+            address += 2
+        for each_declaration in program.data:
+            program_map.record(each_declaration.location,
+                               address,
+                               each_declaration.label)
+            address += each_declaration.reserved_size
+        return program_map
+
+    def __init__(self):
+        self._addresses = {}
+        self._symbols = {}
+
+    def record(self, source, address, symbol=None):
+        entry = (source, address, symbol)
+        if address in self._addresses:
+            raise RuntimeError(f"Duplicated address {address}!")
+        self._addresses[address] = entry
+        if symbol:
+            if symbol in self._symbols:
+                raise RuntimeError(f"Duplicated symbol {symbol}.")
+            self._symbols[symbol] = entry
+
+    def find_address(self, symbol):
+        if symbol not in self._symbols:
+            raise RuntimeError(f"Unknown symbol '{symbol}'")
+        return self._symbols[symbol][1]
+
+    def find_source(self, address):
+        if address not in self._addresses:
+            raise RuntimeError(f"Unknown address '{address}'")
+        return self._addresses[address][0]
+
+    def as_table(self):
+        table = [each for each in self._addresses.values()]
+        return sorted(table, key=lambda entry: entry[1])
 
 class Assembler:
 
     def __init__(self, instructions=None):
         self._instructions = instructions or InstructionSet.default()
-        self._symbol_table = {}
 
-    def assemble(self, program):
+    def assemble(self, program, debug=True):
         layout = []
+        program_map = ProgramMap.create_from(program)
 
-        self._generate_symbol_table(program)
-
+        layout.append(program.size)
         for each_operation in program.code:
             opcode = self._instructions.find_opcode(each_operation.mnemonic)
             operand = each_operation.operand
             if type(operand) == str:
-                operand = self._find_address(program, operand)
+                operand = program_map.find_address(operand)
             layout += [opcode, operand]
 
         for each_declaration in program.data:
             layout += [each_declaration.initial_value
                        for i in range(each_declaration.reserved_size)]
 
+        if debug:
+            debug_infos = program_map.as_table()
+            layout.append(3 * len(debug_infos))
+            for source, address, label in debug_infos:
+                layout += [source, address, label or "?"]
+
         return layout
-
-    def _generate_symbol_table(self, program):
-        self._symbol_table = {}
-
-        offset = 0
-        for index, instruction in enumerate(program.code):
-            if instruction.is_labelled:
-                label = instruction.label
-                if label in self._symbol_table:
-                    raise RuntimeError(f"Duplicated label '{label}'")
-                self._symbol_table[label] = Symbol(label, address=2*index)
-            offset += 2
-
-        for each_declaration in program.data:
-            label = each_declaration.label
-            if each_declaration.label in self._symbol_table:
-                raise RuntimeError(f"Duplicated variable name '{label}'.")
-            self._symbol_table[label] = Symbol(label, offset)
-            offset += each_declaration.reserved_size
-
-
-    def _find_address(self, program, symbol):
-        if symbol not in self._symbol_table:
-            message = (
-                f"Error: Unknown symbol '{symbol}'!\n"
-                f"Candidates are: {self._symbol_table.keys()}\n"
-            )
-            raise RuntimeError(message)
-        return self._symbol_table[symbol].address
 
 
 class AssemblyParser:
-
 
     def __init__(self):
         pass
@@ -179,19 +209,24 @@ class AssemblyParser:
         program = (
             data_segment + code_segment | data_segment | code_segment
         ).setParseAction(self._build_program)
+
         program.ignore(comments)
 
         return program.parseString(text)[0]
 
 
-    def _build_declaration(self, tokens):
-        return Declaration(tokens[0], tokens[1], tokens[2])
+    def _build_declaration(self, source, position, tokens):
+        line_number = len(source[0:position+1].splitlines())
+        return Declaration(tokens[0], tokens[1], tokens[2], location=line_number)
 
-    def _build_operation(self, tokens):
+
+    def _build_operation(self, source, position, tokens):
+        line_number = len(source[0:position+1].splitlines())
         if len(tokens) == 3:
-            return Operation(tokens[1], tokens[2], tokens[0])
+            return Operation(tokens[1], tokens[2], tokens[0], location=line_number)
         else:
-            return Operation(tokens[0], tokens[1])
+            return Operation(tokens[0], tokens[1], location=line_number)
+
 
     def _build_program(self, tokens):
         data = []
