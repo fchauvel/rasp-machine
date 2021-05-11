@@ -33,6 +33,19 @@ class CLI:
         self._format(f"       \u251C\u2500 ACC: {view[0]:>6}")
         self._format(f"       \u2514\u2500  IP: {view[1]:0>6} ~ {view[2]}")
 
+    def show_source(self, current, start, source_fragment):
+        self._format(f"   \u2514\u2500 Assembly Code:")
+        index = start
+        for each_line in source_fragment:
+            marker = "   "
+            if current == index:
+                marker = ">>>"
+            self._format(f"       \u251C\u2500 {index:0>3}: {marker} {each_line}")
+            index += 1
+
+    def no_source_code(self):
+        self._format(f"   \u2514\u2500 Assembly code is not available.")
+        self._format(f"       \u2514\u2500 Did you assemble with the '--debug' flag?")
 
     def show_instruction(self, instruction):
         self._format(f"   \u2514\u2500 RUN: {instruction}")
@@ -60,9 +73,13 @@ def debug(executable_file):
     machine.cpu.attach(profiler)
     machine.memory.attach(profiler)
 
+    assembly_file = Path(executable_file).with_suffix(".asm")
+    with open(assembly_file, "r") as assembly:
+        source_code = assembly.read()
+
     with open(executable_file, "r") as code:
         debug_infos = Loader().from_stream(machine.memory, code)
-        debugger = Debugger(machine, CLI(), debug_infos)
+        debugger = Debugger(machine, CLI(), debug_infos, source_code)
         while True:
             print(" \u253C debug > ", end="")
             user_input = input()

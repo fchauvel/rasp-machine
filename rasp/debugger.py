@@ -18,10 +18,11 @@ class DebugUI:
 class Debugger:
 
 
-    def __init__(self, machine, ui=None, program_map=None):
+    def __init__(self, machine, ui=None, program_map=None, assembly_code=None):
         self._machine = machine
         self._ui = ui or DebugUI()
         self._map = program_map
+        self._assembly_code = assembly_code.splitlines() if assembly_code else None
         self._breakpoints = set()
 
     def set_instruction_pointer(self, address):
@@ -49,6 +50,21 @@ class Debugger:
             view.append((address, value, opcode))
             address += 1
         self._ui.show_memory(view)
+
+    def show_source(self, start, end):
+        if not self._assembly_code:
+            ui.no_source_code()
+
+        else:
+            print(len(self._assembly_code))
+            current_location = self._map.find_source(self._machine.cpu.instruction_pointer)
+            if start is None and end is None:
+                start = max(0, current_location - 5)
+                end = start + 10
+            elif end is None:
+                end = start + 10
+            self._ui.show_source(current_location, start, self._assembly_code[start:end+1])
+
 
     def show_symbol(self, symbol):
         try:
@@ -118,6 +134,10 @@ class Debugger:
             pp.Suppress("show") + pp.Suppress("cpu")
         ).setParseAction(lambda tokens: ShowCPU())
 
+        show_source = (
+            pp.Suppress("show") + pp.Suppress("source") + pp.Optional(integer) + pp.Optional(integer)
+        ).setParseAction(lambda tokens: ShowSource(*tokens))
+
         show_symbol = (
             pp.Suppress("show") + identifier
         ).setParseAction(lambda tokens: ShowSymbol(tokens[0]))
@@ -125,7 +145,7 @@ class Debugger:
         command = (
             set_ip | set_acc | set_mem \
             | break_at | step | stop \
-            | show_mem | show_cpu | show_symbol
+            | show_mem | show_cpu | show_source | show_symbol
         )
 
         return command.parseString(text)[0]
@@ -216,6 +236,22 @@ class ShowMemory(Command):
             return False
         return self._start == other._start \
         and self._end == self._end
+
+
+class ShowSource(Command):
+
+    def __init__(self, start=None, end=None):
+        self._start = start
+        self._end = end
+
+    def send_to(self, debugger):
+        debugger.show_source(self._start, self._end)
+
+    def __eq__(self, other):
+        if not isinstance(other, ShowSource):
+            return False
+        return self._start == other._start \
+            and self._end == other._end
 
 
 class ShowSymbol(Command):

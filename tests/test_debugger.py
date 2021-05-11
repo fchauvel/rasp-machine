@@ -9,7 +9,7 @@
 
 
 from rasp.debugger import Break, Debugger, Quit, SetAccumulator, SetMemory, \
-    SetInstructionPointer, ShowCPU, ShowMemory, Step
+    SetInstructionPointer, ShowCPU, ShowMemory, ShowSource, Step
 from rasp.machine import Load, RASP
 
 from unittest import TestCase
@@ -19,6 +19,7 @@ from unittest import TestCase
 class DebuggerTest(TestCase):
 
     def setUp(self):
+
         self.machine = RASP()
         self.machine.memory.load_program(
             Load(2),
@@ -45,37 +46,49 @@ class DebuggerTest(TestCase):
         self.assertEqual(4, self.machine.cpu.instruction_pointer)
 
 
-
 class CommandParserTest(TestCase):
 
+
+    def verify(self, expectation, text):
+        command = Debugger.parse_command(text)
+        self.assertEqual(expectation, command)
+
     def test_set_ip(self):
-        command = Debugger.parse_command("set ip 25")
-        self.assertEqual(SetInstructionPointer(25), command)
+        self.verify(SetInstructionPointer(25),
+                    "set ip 25")
 
     def test_set_acc(self):
-        command = Debugger.parse_command("set acc 25")
-        self.assertEqual(SetAccumulator(25), command)
+        self.verify(SetAccumulator(25),
+                    "set acc 25")
 
     def test_set_memory(self):
-        command = Debugger.parse_command("set mem 25 -10")
-        self.assertEqual(SetMemory(25, -10), command)
+        self.verify(SetMemory(25, -10),
+                    "set mem 25 -10")
 
     def test_break(self):
-        command = Debugger.parse_command("break 24")
-        self.assertEqual(Break(24), command)
+        self.verify(Break(24),
+                    "break 24")
 
     def test_step(self):
-        command = Debugger.parse_command("step")
-        self.assertEqual(Step(), command)
+        self.verify(Step(), "step")
 
     def test_quit(self):
-        command = Debugger.parse_command("quit")
-        self.assertEqual(Quit(), command)
+        self.verify(Quit(), "quit")
 
     def test_show_memory(self):
-        command = Debugger.parse_command("show mem 10 30")
-        self.assertEqual(ShowMemory(10, 30), command)
+        self.verify(ShowMemory(10, 30),
+                    "show mem 10 30")
 
     def test_show_cpu(self):
-        command = Debugger.parse_command("show cpu")
-        self.assertEqual(ShowCPU(), command)
+        self.verify(ShowCPU(), "show cpu")
+
+    def test_show_source(self):
+        self.verify(ShowSource(), "show source")
+
+    def test_show_source_with_start(self):
+        self.verify(ShowSource(start=12),
+                    "show source 12")
+
+    def test_show_source_with_start_and_end(self):
+        self.verify(ShowSource(12, 20),
+                    "show source 12 20")
