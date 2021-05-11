@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>FLaP &mdash; Flat LaTeX Projects</title>
+    <link rel="stylesheet" href="https://unpkg.com/docute@4/dist/docute.css">
+  </head>
+  <body>
+    <div id="docute"></div>
+    <script src="https://unpkg.com/docute@4/dist/docute.js"></script>
+    <script>
+     new Docute({
+         target: '#docute',
+         title: "RASP: Random Access Store Program",
+         editLinkBase: "https://github.com/fchauvel/rasp-machine/blob/master/docs",
+         nav: [
+             {
+                 title: 'Home',
+                 link: '/'
+             },
+             {
+                 title: 'GitHub',
+                 link: 'https://github.com/fchauvel/rasp-machine'
+             }
+         ],
+         sidebar: [
+             {
+                 title: "What is RASP?",
+                 link: "rasp.md"
+             },
+             {
+                 title: "How to Install RASP?",
+                 link: "setup.md"
+             },
+
+             {
+                 title: "How to write a program?",
+                 link: "example.md"
+             },
+             {
+                 title: "How to debug?",
+                 link: "debug.md"
+             },
+             {
+                 title: "Having Issues?",
+                 link: "reporting_issues.md"
+             },
+             {
+                 title: "Change Log",
+                 link: "CHANGELOG"
+             }
+         ],
+         routes: {
+             "/": {
+                 file: "https://raw.githubusercontent.com/fchauvel/rasp-machine/master/README.md"
+             },
+             "/CHANGELOG": {
+                 file: "https://raw.githubusercontent.com/fchauvel/rasp-machine/master/CHANGELOG.md"
+             },
+         },
+         highlight: [
+             'typescript',
+             'shell-session',
+             'rasm'
+         ]
+     });
+    </script>
+  </body>
+</html>
