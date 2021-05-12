@@ -13,20 +13,24 @@ from rasp.debugger import Break, Debugger, Quit, SetAccumulator, SetMemory, \
 from rasp.machine import Load, RASP
 
 from unittest import TestCase
+from unittest.mock import MagicMock
 
 
 
 class DebuggerTest(TestCase):
 
     def setUp(self):
-
-        self.machine = RASP()
-        self.machine.memory.load_program(
+        self.instructions = [
             Load(2),
             Load(3),
             Load(4),
-            Load(5))
-        self.debugger = Debugger(self.machine)
+            Load(5)
+        ]
+
+        self.machine = RASP()
+        self.machine.memory.load_program(*self.instructions)
+        self.cli = MagicMock()
+        self.debugger = Debugger(self.machine, ui=self.cli)
 
     def test_set_accumulator(self):
         self.debugger.set_accumulator(2)
@@ -45,6 +49,52 @@ class DebuggerTest(TestCase):
         self.debugger.resume()
         self.assertEqual(4, self.machine.cpu.instruction_pointer)
 
+    def test_view_memory(self):
+        self.debugger.show_memory(2, 4)
+
+        expected = [
+            # address, value, is_ip, is_bp, mnemonic
+            (2, 8, False, False, 'load'),
+            (3, 3, False, False, 'add'),
+            (4, 8, False, False, 'load')
+        ]
+        self.cli.show_memory.assert_called_once_with(expected)
+
+
+    def test_view_memory_with_ip(self):
+        self.debugger.show_memory(0, 2)
+
+        expected = [
+            # address, value, is_ip, is_bp, mnemonic
+            (0, 8, True, False, 'load'),
+            (1, 2, False, False, 'read'),
+            (2, 8, False, False, 'load')
+        ]
+        self.cli.show_memory.assert_called_once_with(expected)
+
+    def test_view_memory_with_breakpoint(self):
+        self.debugger.set_breakpoint(3)
+
+        self.debugger.show_memory(2, 4)
+
+        expected = [
+            # address, value, is_ip, is_bp, mnemonic
+            (2, 8, False, False, 'load'),
+            (3, 3, False, True, 'add'),
+            (4, 8, False, False, 'load')
+        ]
+        self.cli.show_memory.assert_called_once_with(expected)
+
+    def test_view_breakpoints(self):
+        self.debugger.set_breakpoint(3)
+        self.debugger.set_breakpoint(6)
+
+        self.debugger.show_breakpoints()
+
+        expected = [
+            (3, 3, False, 'add'),
+            (6, 8, False, 'load')
+        ]
 
 class CommandParserTest(TestCase):
 

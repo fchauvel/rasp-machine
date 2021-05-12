@@ -24,9 +24,17 @@ class CLI:
 
     def show_memory(self, view):
         self._format(f"   \u2514\u2500 Memory:")
-        for index, (address, value, mnemonic) in enumerate(view):
+        for index, (address, value, is_current, is_breakpoint, mnemonic) in enumerate(view):
             marker = "\u251C" if index < len(view) - 1 else "\u2514"
-            self._format(f"       {marker}\u2500{address:>5}: {value:>5} - {mnemonic:<20}")
+            break_point = "(b)" if is_breakpoint else "   "
+            current = ">>>" if is_current else "   "
+            self._format(f"       {marker}\u2500 {current} {break_point} {address:>5}: {value:>5} {mnemonic:<20}")
+
+    def show_breakpoints(self, infos):
+        self._format(f"   \u2514\u2500 Breakpoints:")
+        for address, is_current, value, mnemonic in infos:
+            current = ">>>" if is_current else "   "
+            self._format(f"       \u2514\u2500 {current} {address:>5}: {value:>5} {mnemonic:<20}")
 
     def show_cpu(self, view):
         self._format(f"   \u2514\u2500 CPU:")
@@ -49,6 +57,9 @@ class CLI:
 
     def show_instruction(self, instruction):
         self._format(f"   \u2514\u2500 RUN: {instruction}")
+
+    def invalid_command(self, command):
+        self._format(f"   \u2514\u2500 Invalid command '{command}'.")
 
     def _format(self, text):
         print(" \u2502" + text)
@@ -79,11 +90,16 @@ def debug(executable_file):
 
     with open(executable_file, "r") as code:
         debug_infos = Loader().from_stream(machine.memory, code)
-        debugger = Debugger(machine, CLI(), debug_infos, source_code)
+        cli = CLI()
+        debugger = Debugger(machine, cli, debug_infos, source_code)
         while True:
             print(" \u253C debug > ", end="")
             user_input = input()
-            command = Debugger.parse_command(user_input)
+            try:
+                command = Debugger.parse_command(user_input)
+            except Exception:
+                cli.invalid_command(user_input)
+                continue
             if command.is_quit():
                 break
             command.send_to(debugger)

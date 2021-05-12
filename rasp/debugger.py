@@ -34,6 +34,19 @@ class Debugger:
     def set_memory(self, address, value):
         self._machine.memory.write(address, value)
 
+    def show_breakpoints(self):
+        infos = []
+        for any_address in self._breakpoints:
+            value = self._machine.memory.read(any_address)
+            mnemonic = self._machine.instructions.find_mnemonic(value)
+            infos.append((
+                any_address,
+                any_address == self._machine.cpu.instruction_pointer,
+                value,
+                mnemonic
+            ))
+        self._ui.show_breakpoints(infos)
+
     def show_cpu(self):
         view = ( self._machine.cpu.accumulator,
                  self._machine.cpu.instruction_pointer,
@@ -47,7 +60,9 @@ class Debugger:
         while address <= end:
             value = self._machine.memory.read(address)
             opcode = self._machine.instructions.find_mnemonic(value)
-            view.append((address, value, opcode))
+            is_ip = address == self._machine.cpu.instruction_pointer
+            is_bp = address in self._breakpoints
+            view.append((address, value, is_ip, is_bp, opcode))
             address += 1
         self._ui.show_memory(view)
 
@@ -141,6 +156,10 @@ class Debugger:
             pp.Suppress("show") + pp.Suppress("mem") + address + address
         ).setParseAction(lambda tokens: ShowMemory(tokens[0], tokens[1]))
 
+        show_breakpoints = (
+            pp.Suppress("show") + pp.Suppress("breakpoints")
+        ).setParseAction(lambda tokens: ShowBreakpoints())
+
         show_cpu = (
             pp.Suppress("show") + pp.Suppress("cpu")
         ).setParseAction(lambda tokens: ShowCPU())
@@ -156,7 +175,7 @@ class Debugger:
         command = (
             set_ip | set_acc | set_mem \
             | break_at | step | stop \
-            | show_mem | show_cpu | show_source | show_symbol
+            | show_mem | show_cpu | show_source | show_breakpoints | show_symbol
         )
 
         return command.parseString(text)[0]
@@ -278,6 +297,18 @@ class ShowSymbol(Command):
         if not isinstance(other, ShowSymbol):
             return False
         return self._symbol == other._symbol
+
+
+class ShowBreakpoints(Command):
+
+    def __init__(self):
+        super().__init__()
+
+    def send_to(self, debugger):
+        debugger.show_breakpoints()
+
+    def __eq__(self, other):
+        return isinstance(other, ShowBreakpoints)
 
 
 class ShowCPU(Command):
