@@ -63,7 +63,7 @@ class Debugger:
                 end = start + 10
             elif end is None:
                 end = start + 10
-            self._ui.show_source(current_location, start, self._assembly_code[start:end+1])
+            self._ui.show_source(current_location, start, self._assembly_code[start-1:end])
 
 
     def show_symbol(self, symbol):
@@ -78,11 +78,22 @@ class Debugger:
         while self._machine.cpu.instruction_pointer not in self._breakpoints:
             self._machine.run_one_cycle()
 
-    def step(self):
-        instruction = self._machine.next_instruction
-        self._ui.show_instruction(str(instruction))
-        self._machine.run_one_cycle()
-        self.show_cpu()
+    def step(self, step_count=1):
+        for each_step in range(step_count):
+            instruction = self._machine.next_instruction
+            self._ui.show_instruction(str(instruction))
+            self._machine.run_one_cycle()
+            self.show_cpu()
+            if self._at_break_point:
+                break
+            if self._machine.is_stopped:
+                break
+        current_line_number = self._map.find_source(self._machine.cpu.instruction_pointer)
+        self.show_source(current_line_number-1, current_line_number+1)
+
+    @property
+    def _at_break_point(self):
+        return self._machine.cpu.instruction_pointer in self._breakpoints
 
     def set_breakpoint(self, address):
         self._breakpoints.add(address)
@@ -119,8 +130,8 @@ class Debugger:
         ).setParseAction(lambda tokens: Break(tokens[0]))
 
         step = (
-            pp.Suppress("step")
-        ).setParseAction(lambda tokens: Step())
+            pp.Suppress("step") + pp.Optional(integer)
+        ).setParseAction(lambda tokens: Step(*tokens))
 
         stop = (
             pp.Suppress("quit") | pp.Suppress("exit")
@@ -283,11 +294,12 @@ class ShowCPU(Command):
 
 class Step(Command):
 
-    def __init__(self):
+    def __init__(self, step_count=None):
         super().__init__()
+        self._step_count = step_count or 1
 
     def send_to(self, debugger):
-        debugger.step()
+        debugger.step(self._step_count)
 
     def __eq__(self, other):
         return isinstance(other, Step)

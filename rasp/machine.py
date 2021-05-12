@@ -297,6 +297,11 @@ class RASP:
         self._is_running = False
 
 
+    @property
+    def is_stopped(self):
+        return not self._is_running
+
+
 class Profiler:
 
     def __init__(self):
