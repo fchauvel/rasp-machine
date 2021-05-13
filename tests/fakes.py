@@ -13,8 +13,8 @@ from rasp.machine import InputDevice, OutputDevice
 
 class FakeInputDevice(InputDevice):
 
-    def __init__(self):
-        self.inputs = [0]
+    def __init__(self, inputs=None):
+        self.inputs = inputs or [0]
         self._index = 0
         super().__init__()
 

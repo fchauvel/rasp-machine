@@ -71,14 +71,28 @@ class Debugger:
             ui.no_source_code()
 
         else:
-            print(len(self._assembly_code))
             current_location = self._map.find_source(self._machine.cpu.instruction_pointer)
             if start is None and end is None:
-                start = max(0, current_location - 5)
+                start = max(1, current_location - 5)
                 end = start + 10
             elif end is None:
                 end = start + 10
-            self._ui.show_source(current_location, start, self._assembly_code[start-1:end])
+
+            fragment = []
+            for each_line in range(start, end+1):
+                is_current = each_line == current_location
+
+                is_breakpoint = False
+                try:
+                    address = self._map.find_address_by_line(each_line)
+                    is_breakpoint = address in self._breakpoints
+                except RuntimeError:
+                    pass
+                fragment.append(
+                    (each_line, is_current, is_breakpoint, self._assembly_code[each_line-1])
+                )
+
+            self._ui.show_source(fragment)
 
 
     def show_symbol(self, symbol):
@@ -87,7 +101,7 @@ class Debugger:
             self.show_memory(address, address+1)
 
         except RuntimeError as error:
-            ui.report_error(error)
+            self._ui.report_error(error)
 
     def resume(self):
         while self._machine.cpu.instruction_pointer not in self._breakpoints:

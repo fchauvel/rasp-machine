@@ -41,15 +41,12 @@ class CLI:
         self._format(f"       \u251C\u2500 ACC: {view[0]:>6}")
         self._format(f"       \u2514\u2500  IP: {view[1]:0>6} ~ {view[2]}")
 
-    def show_source(self, current, start, source_fragment):
+    def show_source(self, code_fragment):
         self._format(f"   \u2514\u2500 Assembly Code:")
-        index = start
-        for each_line in source_fragment:
-            marker = "   "
-            if current == index:
-                marker = ">>>"
-            self._format(f"       \u251C\u2500 {index:0>3}: {marker} {each_line}")
-            index += 1
+        for line_number, is_current, is_breakpoint, code in code_fragment:
+            current = ">>>" if is_current else "   "
+            bp = "(b)" if is_breakpoint else "   "
+            self._format(f"       \u251C\u2500 {line_number:0>3}: {current} {bp} {code}")
 
     def no_source_code(self):
         self._format(f"   \u2514\u2500 Assembly code is not available.")
@@ -61,8 +58,19 @@ class CLI:
     def invalid_command(self, command):
         self._format(f"   \u2514\u2500 Invalid command '{command}'.")
 
-    def _format(self, text):
-        print(" \u2502" + text)
+    def _format(self, text, end="\n"):
+        print(" \u2502" + text, end=end)
+
+    def report_error(self, error):
+        self._format(f"   \u2514\u2500 Error: {str(error)}.")
+
+    def read(self):
+        self._format(f"      \u2514\u2500 Input? ", end="")
+        user_input = input()
+        return user_input
+
+    def write(self, value):
+        self._format(f"   \u2514\u2500 Output: {value}")
 
 
 def assemble(assembly_file):
@@ -79,18 +87,19 @@ def assemble(assembly_file):
 
 
 def debug(executable_file):
-    machine = RASP()
-    profiler = Profiler()
-    machine.cpu.attach(profiler)
-    machine.memory.attach(profiler)
 
     assembly_file = Path(executable_file).with_suffix(".asm")
     with open(assembly_file, "r") as assembly:
         source_code = assembly.read()
 
     with open(executable_file, "r") as code:
-        debug_infos = Loader().from_stream(machine.memory, code)
         cli = CLI()
+        machine = RASP(input_device=cli, output_device=cli)
+        profiler = Profiler()
+        machine.cpu.attach(profiler)
+        machine.memory.attach(profiler)
+        debug_infos = Loader().from_stream(machine.memory, code)
+
         debugger = Debugger(machine, cli, debug_infos, source_code)
         while True:
             print(" \u253C debug > ", end="")

@@ -10,7 +10,10 @@
 
 from rasp.debugger import Break, Debugger, Quit, SetAccumulator, SetMemory, \
     SetInstructionPointer, ShowCPU, ShowMemory, ShowSource, Step
-from rasp.machine import Load, RASP
+from rasp.machine import Add, Halt, Load, Print, RASP, Read, Store
+from rasp.assembler import ProgramMap
+
+from tests.fakes import FakeInputDevice
 
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -95,6 +98,102 @@ class DebuggerTest(TestCase):
             (3, 3, False, 'add'),
             (6, 8, False, 'load')
         ]
+
+
+
+class WithSourceCode(TestCase):
+
+
+    def setUp(self):
+        program = ("segment: data\n"
+                   "           value 1 0 \n"
+                   "segment: code\n"
+                   "   start:  read  value\n"
+                   "           load  0\n"
+                   "           add   value\n"
+                   "           read  value\n"
+                   "           add   value\n"
+                   "           store value\n"
+                   "           print value\n"
+                   "           halt  0\n")
+        debug_infos = ProgramMap.from_table([
+            (4, 0, "start"),
+            (5, 2, None),
+            (6, 4, None),
+            (7, 6, None),
+            (8, 8, None),
+            (9, 10, None),
+            (10, 12, None),
+            (11, 14, None),
+            (2, 16, "value")
+        ])
+
+        self.instructions = [
+            Read(16),
+            Load(0),
+            Add(16),
+            Read(16),
+            Add(16),
+            Store(16),
+            Print(16),
+            Halt()
+        ]
+
+        self.machine = RASP(input_device=FakeInputDevice([20, 30]))
+        self.machine.memory.load_program(*self.instructions)
+        self.cli = MagicMock()
+        self.debugger = Debugger(self.machine, self.cli, debug_infos, program)
+
+
+    def test_execute_a_single_step(self):
+        self.assertEqual(0, self.machine.cpu.instruction_pointer)
+        self.debugger.step()
+        self.assertEqual(2, self.machine.cpu.instruction_pointer)
+
+    def test_execute_multiple_step(self):
+        self.assertEqual(0, self.machine.cpu.instruction_pointer)
+        self.debugger.step(3)
+        self.assertEqual(2*3, self.machine.cpu.instruction_pointer)
+
+    def test_view_source(self):
+        self.debugger.show_source(1, 10)
+
+        # line_no, is_current, is_breakpoint, source code
+        expected = [
+            (1, False, False, "segment: data"),
+            (2, False, False, "           value 1 0 "),
+            (3, False, False, "segment: code"),
+            (4, True,  False, "   start:  read  value"),
+            (5, False, False, "           load  0"),
+            (6, False, False, "           add   value"),
+            (7, False, False, "           read  value"),
+            (8, False, False, "           add   value"),
+            (9, False, False, "           store value"),
+            (10, False, False, "           print value")
+        ]
+
+        self.cli.show_source.assert_called_once_with(expected)
+
+    def test_view_source_with_breakpoint(self):
+        self.debugger.set_breakpoint(4)
+        self.debugger.show_source(1, 10)
+
+        # line_no, is_current, is_breakpoint, source code
+        expected = [
+            (1, False, False, "segment: data"),
+            (2, False, False, "           value 1 0 "),
+            (3, False, False, "segment: code"),
+            (4, True,  False, "   start:  read  value"),
+            (5, False, False, "           load  0"),
+            (6, False, True, "           add   value"),
+            (7, False, False, "           read  value"),
+            (8, False, False, "           add   value"),
+            (9, False, False, "           store value"),
+            (10, False, False, "           print value")
+        ]
+
+        self.cli.show_source.assert_called_once_with(expected)
+
 
 class CommandParserTest(TestCase):
 
