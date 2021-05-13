@@ -131,7 +131,7 @@ class ProgramMap:
         if symbol:
             if symbol in self._symbols:
                 raise RuntimeError(f"Duplicated symbol {symbol}.")
-        self._symbols[symbol] = entry
+            self._symbols[symbol] = entry
 
     def find_address_by_line(self, line_number):
         for line, address, symbol in self._addresses.values():

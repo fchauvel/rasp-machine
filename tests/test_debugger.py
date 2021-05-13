@@ -195,6 +195,27 @@ class WithSourceCode(TestCase):
         self.cli.show_source.assert_called_once_with(expected)
 
 
+    def test_view_source_with_breakpoint_at_line(self):
+        self.debugger.set_breakpoint_at_line(8)
+        self.debugger.show_source(1, 10)
+
+        # line_no, is_current, is_breakpoint, source code
+        expected = [
+            (1, False, False, "segment: data"),
+            (2, False, False, "           value 1 0 "),
+            (3, False, False, "segment: code"),
+            (4, True,  False, "   start:  read  value"),
+            (5, False, False, "           load  0"),
+            (6, False, False, "           add   value"),
+            (7, False, False, "           read  value"),
+            (8, False, True, "           add   value"),
+            (9, False, False, "           store value"),
+            (10, False, False, "           print value")
+        ]
+
+        self.cli.show_source.assert_called_once_with(expected)
+
+
 class CommandParserTest(TestCase):
 
 

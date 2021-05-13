@@ -67,7 +67,7 @@ class CLI:
     def read(self):
         self._format(f"      \u2514\u2500 Input? ", end="")
         user_input = input()
-        return user_input
+        return int(user_input)
 
     def write(self, value):
         self._format(f"   \u2514\u2500 Output: {value}")
@@ -81,7 +81,7 @@ def assemble(assembly_file):
     assembler = Assembler()
     layout = assembler.assemble(program)
 
-    executable = Path(assembly_file).stem + ".rx"
+    executable = Path(assembly_file).with_suffix(".rx")
     with open(executable, "w") as output:
         output.write(" ".join(str(each) for each in layout))
 

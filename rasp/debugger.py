@@ -128,6 +128,13 @@ class Debugger:
         self._breakpoints.add(address)
 
 
+    def set_breakpoint_at_line(self, line_number):
+        if not self._assembly_code:
+            self._ui.report_error("Error: Assembly code is not available.")
+        address = self._map.find_address_by_line(line_number)
+        self.set_breakpoint(address)
+
+
     @staticmethod
     def parse_command(text):
         import pyparsing as pp
@@ -143,7 +150,7 @@ class Debugger:
         ).setParseAction(lambda tokens: int(tokens[0]))
 
         set_ip = (
-            pp.Suppress("set") + pp.Suppress("ip") + address
+            pp.Suppress("set") + pp.Suppress("ip")  +  address
         ).setParseAction(lambda tokens: SetInstructionPointer(tokens[0]))
 
         set_acc = (
@@ -155,8 +162,8 @@ class Debugger:
         ).setParseAction(lambda tokens: SetMemory(tokens[0], tokens[1]))
 
         break_at = (
-            pp.Suppress("break") + address
-        ).setParseAction(lambda tokens: Break(tokens[0]))
+            pp.Suppress("break") + pp.Suppress("at") + pp.oneOf(["line", "address"]) + address
+        ).setParseAction(lambda tokens: Break(tokens[1], tokens[0] == "line"))
 
         step = (
             pp.Suppress("step") + pp.Optional(integer)
@@ -253,17 +260,22 @@ class SetMemory(Command):
 
 class Break(Command):
 
-    def __init__(self, address):
+    def __init__(self, address, is_line_number=False):
         super().__init__()
         self._address = address
+        self._is_line_number = is_line_number
 
     def send_to(self, debugger):
-        debugger.set_breakpoint(self._address)
+        if self._is_line_number:
+            debugger.set_breakpoint_at_line(self._address)
+        else:
+            debugger.set_breakpoint(self._address)
 
     def __eq__(self, other):
         if not isinstance(other, Break):
             return False
-        return self._address == other._address
+        return self._address == other._address \
+            and self._is_line_number == other._is_line_number
 
 
 class ShowMemory(Command):
