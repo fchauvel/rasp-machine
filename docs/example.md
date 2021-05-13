@@ -1,14 +1,14 @@
 # How to Write RASP Programs?
 
-RASP machine read integers ... and writing long series of integers
-quickly gets annoying. To mitigate that, RASP comes with mini assembly
-language, and assembler and a debugger that help write program more
+RASP machines read integers ... and writing long series of integers
+quickly gets annoying. To mitigate that, RASP comes with a minimal assembly
+language, an assembler and a debugger that help write program more
 efficiently.
 
 Let us consider a program that multiply two numbers (remember that the
 original instruction set only offers add and subtract).
 
-```rasm
+```asm
 ;; Read two numbers on from the input device, multiply them and return
 ;; the result on the output device.
 
@@ -56,7 +56,7 @@ of integer that we can now load into our RASP machine and run.
 ```
 
 To run this file, we simply invoke `rasp execute` as follows:
-```console
+```shell-session
 $ rasp execute multiplication.rx
 rasp? 10
 rasp? 20
