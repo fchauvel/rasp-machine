@@ -27,7 +27,8 @@ class DebuggerTest(TestCase):
             Load(2),
             Load(3),
             Load(4),
-            Load(5)
+            Load(5),
+            Halt()
         ]
 
         self.machine = RASP()
@@ -47,9 +48,19 @@ class DebuggerTest(TestCase):
         self.debugger.set_memory(10, 2)
         self.assertEqual(2, self.machine.memory.read(10))
 
-    def test_set_breakpoint(self):
+    def test_run_until_breakpoint(self):
         self.debugger.set_breakpoint(4)
-        self.debugger.resume()
+        self.debugger.run()
+        self.assertEqual(4, self.machine.cpu.instruction_pointer)
+
+    def test_run_until_end(self):
+        self.debugger.run()
+        self.assertEqual(10, self.machine.cpu.instruction_pointer)
+
+    def test_run_from_breakpoint(self):
+        self.debugger.set_breakpoint(0)
+        self.debugger.set_breakpoint(4)
+        self.debugger.run()
         self.assertEqual(4, self.machine.cpu.instruction_pointer)
 
     def test_view_memory(self):
@@ -237,7 +248,7 @@ class CommandParserTest(TestCase):
 
     def test_break(self):
         self.verify(Break(24),
-                    "break 24")
+                    "break at address 24")
 
     def test_step(self):
         self.verify(Step(), "step")

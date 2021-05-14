@@ -296,7 +296,6 @@ class RASP:
     def halt(self):
         self._is_running = False
 
-
     @property
     def is_stopped(self):
         return not self._is_running

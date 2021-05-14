@@ -103,19 +103,24 @@ class Debugger:
         except RuntimeError as error:
             self._ui.report_error(error)
 
-    def resume(self):
-        while self._machine.cpu.instruction_pointer not in self._breakpoints:
-            self._machine.run_one_cycle()
+    def run(self):
+        while True:
+            self._execute_one_instruction()
+            if self._machine.is_stopped or self._at_break_point:
+                break
+        self.show_cpu()
+
+    def _execute_one_instruction(self):
+        instruction = self._machine.next_instruction
+        print(str(instruction))
+        self._ui.show_instruction(str(instruction))
+        self._machine.run_one_cycle()
 
     def step(self, step_count=1):
         for each_step in range(step_count):
-            instruction = self._machine.next_instruction
-            self._ui.show_instruction(str(instruction))
-            self._machine.run_one_cycle()
+            self._execute_one_instruction()
             self.show_cpu()
-            if self._at_break_point:
-                break
-            if self._machine.is_stopped:
+            if self._at_break_point or self._machine.is_stopped:
                 break
         current_line_number = self._map.find_source(self._machine.cpu.instruction_pointer)
         self.show_source(current_line_number-1, current_line_number+1)
@@ -169,6 +174,10 @@ class Debugger:
             pp.Suppress("step") + pp.Optional(integer)
         ).setParseAction(lambda tokens: Step(*tokens))
 
+        run = (
+            pp.Suppress("run") | pp.Suppress("continue")
+        ).setParseAction(lambda tokens: Run())
+
         stop = (
             pp.Suppress("quit") | pp.Suppress("exit")
         ).setParseAction(lambda tokens: Quit())
@@ -195,7 +204,7 @@ class Debugger:
 
         command = (
             set_ip | set_acc | set_mem \
-            | break_at | step | stop \
+            | break_at | step | stop | run \
             | show_mem | show_cpu | show_source | show_breakpoints | show_symbol
         )
 
@@ -375,3 +384,15 @@ class Quit(Command):
 
     def __eq__(self, other):
         return isinstance(other, Quit)
+
+
+class Run(Command):
+
+    def __init__(self):
+        super().__init__()
+
+    def send_to(self, debugger):
+        debugger.run()
+
+    def __eq__(self, other):
+        return isinstance(other, Run)
