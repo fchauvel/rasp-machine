@@ -10,6 +10,7 @@
 
 import logging
 
+from rasp import About
 from rasp.debugger import Debugger
 from rasp.assembler import Assembler, AssemblyParser, ProgramMap
 from rasp.loader import Loader
@@ -21,6 +22,16 @@ from sys import argv
 
 
 class CLI:
+
+    def show_opening(self):
+        print(f"{About.NAME} {About.VERSION}")
+        print(f"{About.COPYRIGHT}")
+        print()
+
+
+    def show_closing(self):
+        print("That's all folks!")
+
 
     def show_memory(self, view):
         self._format(f"   \u2514\u2500 Memory:")
@@ -101,6 +112,7 @@ def debug(executable_file):
         debug_infos = Loader().from_stream(machine.memory, code)
 
         debugger = Debugger(machine, cli, debug_infos, source_code)
+        cli.show_opening()
         while True:
             print(" \u253C debug > ", end="")
             user_input = input()
@@ -112,7 +124,7 @@ def debug(executable_file):
             if command.is_quit():
                 break
             command.send_to(debugger)
-
+        cli.show_closing()
 
 
 def execute(executable_file):

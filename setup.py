@@ -1,8 +1,20 @@
+#
+# This file is part of rasp-machine.
+#
+# Copyright (C) 2021 by Franck Chauvel
+#
+# This code is licensed under the MIT License.
+# See LICENSE.txt for details
+#
+
+
+from rasp import About
+
 from setuptools import setup, find_packages
 
 setup(
-    name='rasp',
-    version='0.1.0',
+    name=About.NAME,
+    version=About.VERSION,
     url='https://github.com/fchauvel/rasp.git',
     author='Franck Chauvel',
     author_email='franck.chauvel@gmail.com',
