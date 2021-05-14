@@ -42,15 +42,29 @@ class CLI:
             self._format(f"       {marker}\u2500 {current} {break_point} {address:>5}: {value:>5} {mnemonic:<20}")
 
     def show_breakpoints(self, infos):
-        self._format(f"   \u2514\u2500 Breakpoints:")
+        items = []
         for address, is_current, value, mnemonic in infos:
             current = ">>>" if is_current else "   "
-            self._format(f"       \u2514\u2500 {current} {address:>5}: {value:>5} {mnemonic:<20}")
+            items.append(f"{current} {address:>5}: {value:>5} {mnemonic:<20}")
+        self._format_list("Breakpoints", items)
+
+    def _format_list(self, title, items):
+        if not items:
+            self._format(f"   \u2514\u2500 {title}: None")
+        else:
+            self._format(f"   \u2514\u2500 {title}:")
+            for index, item in enumerate(items):
+                if index < len(items) - 1:
+                    self._format(f"       \u251C\u2500 {item}")
+                else:
+                    self._format(f"       \u2514\u2500 {item}")
+
 
     def show_cpu(self, view):
-        self._format(f"   \u2514\u2500 CPU:")
-        self._format(f"       \u251C\u2500 ACC: {view[0]:>6}")
-        self._format(f"       \u2514\u2500  IP: {view[1]:0>6} ~ {view[2]}")
+        self._format_list("CPU:", [
+            f"ACC: {view[0]:>6}",
+            f" IP: {view[1]:0>6} ~ {view[2]}"
+        ])
 
     def show_source(self, code_fragment):
         self._format(f"   \u2514\u2500 Assembly Code:")
