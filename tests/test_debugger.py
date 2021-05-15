@@ -106,9 +106,22 @@ class DebuggerTest(TestCase):
         self.debugger.show_breakpoints()
 
         expected = [
-            (3, 3, False, 'add'),
-            (6, 8, False, 'load')
+            (3, False, 3, 'add'),
+            (6, False, 8, 'load')
         ]
+        self.cli.show_breakpoints.assert_called_once_with(expected)
+
+    def test_clear_breakpoint(self):
+        self.debugger.set_breakpoint(4)
+        self.debugger.set_breakpoint(6)
+
+        self.debugger.clear_breakpoint(4)
+
+        self.debugger.show_breakpoints()
+        self.cli.show_breakpoints.assert_called_once_with([
+            (6, False, 8, 'load')
+        ])
+
 
 
 
@@ -165,6 +178,17 @@ class WithSourceCode(TestCase):
         self.assertEqual(0, self.machine.cpu.instruction_pointer)
         self.debugger.step(3)
         self.assertEqual(2*3, self.machine.cpu.instruction_pointer)
+
+    def test_clear_breakpoint(self):
+        self.debugger.set_breakpoint_at_line(4)
+        self.debugger.set_breakpoint_at_line(6)
+
+        self.debugger.clear_breakpoint_at_line(4)
+
+        self.debugger.show_breakpoints()
+        self.cli.show_breakpoints.assert_called_once_with([
+            (4, False, 3, 'add')
+        ])
 
     def test_view_source(self):
         self.debugger.show_source(1, 10)

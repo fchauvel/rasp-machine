@@ -139,6 +139,15 @@ class Debugger:
         address = self._map.find_address_by_line(line_number)
         self.set_breakpoint(address)
 
+    def clear_breakpoint(self, address):
+        self._breakpoints.remove(address)
+
+
+    def clear_breakpoint_at_line(self, line_number):
+        if not self._assembly_code:
+            self._ui.report_error("Error: Assembly code is not available")
+        address = self._map.find_address_by_line(line_number)
+        self.clear_breakpoint(address)
 
     @staticmethod
     def parse_command(text):
@@ -169,6 +178,10 @@ class Debugger:
         break_at = (
             pp.Suppress("break") + pp.Suppress("at") + pp.oneOf(["line", "address"]) + address
         ).setParseAction(lambda tokens: Break(tokens[1], tokens[0] == "line"))
+
+        clear = (
+            pp.Suppress("clear") + pp.oneOf(["line", "address"]) + address
+        ).setParseAction(lambda tokens: Clear(tokens[1], tokens[0] == "line"))
 
         step = (
             pp.Suppress("step") + pp.Optional(integer)
@@ -204,7 +217,7 @@ class Debugger:
 
         command = (
             set_ip | set_acc | set_mem \
-            | break_at | step | stop | run \
+            | break_at | clear | step | stop | run \
             | show_mem | show_cpu | show_source | show_breakpoints | show_symbol
         )
 
@@ -282,6 +295,25 @@ class Break(Command):
 
     def __eq__(self, other):
         if not isinstance(other, Break):
+            return False
+        return self._address == other._address \
+            and self._is_line_number == other._is_line_number
+
+
+class Clear(Command):
+
+    def __init__(self, address, is_line_number=False):
+        self._address = address
+        self._is_line_number = is_line_number
+
+    def send_to(self, debugger):
+        if self._is_line_number:
+            debugger.clear_breakpoint_at_line(self._address)
+        else:
+            debugger.clear_breakpoint(self._address)
+
+    def __eq__(self, other):
+        if not isinstance(other, Clear):
             return False
         return self._address == other._address \
             and self._is_line_number == other._is_line_number
