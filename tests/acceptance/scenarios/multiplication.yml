@@ -1,0 +1,56 @@
+#
+# This file is part of rasp-machine.
+#
+# Copyright (C) 2021 by Franck Chauvel
+#
+# This code is licensed under the MIT License.
+# See LICENSE.txt for details
+#
+
+scenario:
+  name: Multiplication 
+  description: Multiply two numbers read from the input device
+  program: |
+    segment: data
+      left        1  0
+      right       1  0
+      counter     1  0
+      result      1  0
+      
+    segment: code
+             read left            ;; left = input()
+             read right           ;; right = input()
+      loop:  load 0               ;; while counter < right
+             add counter
+             subtract right
+             jump done            ;; do:      
+             load 0             
+             add result
+             add left
+             store result         ;;    result += left
+             load 1
+             add counter
+             store counter        ;;    counter += 1
+             load 0
+             jump loop            ;; done
+    
+      done:  print result         ;; print result
+             halt -1
+            
+  tests:
+    - name: 2 x 3
+      inputs: [ 2, 3 ]
+      outputs: [ 6 ]
+    - name: 4 x 1
+      inputs: [ 4, 1 ]
+      outputs: [ 4 ]
+    - name: 1 x 10
+      inputs: [ 1, 10 ]
+      outputs: [ 10 ]
+    - name: 1 x 0
+      inputs: [ 1, 0 ]
+      outputs: [ 0 ]
+    - name: 0 x 10
+      inputs: [ 0, 10 ]
+      outputs: [ 0 ]
+    

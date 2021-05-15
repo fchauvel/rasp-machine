@@ -1,0 +1,53 @@
+#
+# This file is part of rasp-machine.
+#
+# Copyright (C) 2021 by Franck Chauvel
+#
+# This code is licensed under the MIT License.
+# See LICENSE.txt for details
+#
+
+scenario:
+  name: Addition
+  description: Add n numbers read from the input device
+  program: |
+    segment: data
+      entry_count   1  0
+      counter       1  0
+      result        1  0
+      
+    segment: code
+            read entry_count       ;; entry_count = user_input?
+            
+      loop: load 0                 ;; while counter < entry_count 
+            add counter
+            subtract entry_count
+            jump done              ;;    
+            load 0                 ;; do:
+            add result
+            read result
+            add result
+            store result           ;;    result += user_input
+            load 1    
+            add  counter
+            store counter          ;;    counter += 1
+            load 0
+            jump loop              ;; done
+            
+      done: print result           ;; print result
+            halt -1
+            
+  tests:
+    - name: With 3 inputs
+      inputs: [ 3, 1, 2, 3 ]
+      outputs: [ 6 ]
+    - name: With 1 inputs
+      inputs: [ 1, 10 ]
+      outputs: [ 10 ]
+    - name: With zero input
+      inputs: [ 0 ]
+      outputs: [ 0 ]
+    - name: With 10 inputs
+      inputs: [ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] 
+      outputs: [ 55 ]
+    

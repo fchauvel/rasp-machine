@@ -21,7 +21,7 @@ class FakeInputDevice(InputDevice):
     def read(self):
         value =  self.inputs[self._index]
         self._index = (self._index + 1) % len(self.inputs)
-        return value
+        return int(value)
 
 
 class FakeOutputDevice(OutputDevice):
