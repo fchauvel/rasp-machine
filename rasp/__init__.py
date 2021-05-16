@@ -12,10 +12,12 @@ class About:
 
     NAME = "RASP-Machine"
 
+    CLI_PROGRAM = "rasp"
+
     VERSION = "0.1.0"
 
     COPYRIGHT = "Copyright (C) 2021, Franck Chauvel"
 
     LICENSE = "MIT"
 
-    DESCRIPTION = "A simple emulator for RASP machines"
+    DESCRIPTION = "Emulator for RASP machines"

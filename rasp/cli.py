@@ -47,7 +47,7 @@ class CLI:
             current = ">>>" if is_current else "   "
             items.append(f"{current} {address:>5}: {value:>5} {mnemonic:<20}")
         self._format_list("Breakpoints", items)
-
+#
     def _format_list(self, title, items):
         if not items:
             self._format(f"   \u2514\u2500 {title}: None")
@@ -155,15 +155,67 @@ def execute(executable_file):
     print(f"Memory: {profiler.used_memory} cell(s)")
 
 
+def version():
+    print(f"{About.NAME} {About.VERSION} -- {About.DESCRIPTION}")
+    print(f"{About.COPYRIGHT}")
+    print(f"{About.LICENSE} license")
+
+
+
+def parse_arguments(command_line):
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(
+        prog=About.CLI_PROGRAM,
+        description=About.DESCRIPTION)
+
+    subparsers = parser.add_subparsers(title="Available commands")
+    assembler = subparsers.add_parser("assemble",
+                                      help="assemble RASP programs into an executable")
+    assembler.add_argument("--debug", "-d",
+                           help="Inline debugging information into the executable",
+                           action="store_true")
+    assembler.add_argument("assembly_file",
+                           metavar="FILE",
+                           help="The RASP assembly file to compile to machine code")
+    assembler.set_defaults(command='assemble')
+
+    debugger = subparsers.add_parser("debug",
+                                     help='starts the interactive debugger')
+
+    assembler.add_argument("executable_file",
+                           metavar="FILE",
+                           help="The RASP executable file to compile to debug")
+
+    runner = subparsers.add_parser("execute",
+                                   help='execute the given RASP executable file')
+    runner.add_argument("executable_file",
+                           metavar="FILE",
+                           help="The RASP executable file to compile to debug")
+    runner.set_defaults(command="execute")
+
+    about = subparsers.add_parser("version",
+                                  help="show version, license and other details")
+    about.set_defaults(command="about")
+
+    return parser.parse_args(command_line)
+
+
 def main():
     from sys import argv
 
     logging.basicConfig(filename='rasp.log', level=logging.INFO)
 
-    command = argv[1]
-    if command == "assemble":
-        assemble(argv[2])
-    elif command == "execute":
-        execute(argv[2])
-    elif command == "debug":
-        debug(argv[2])
+    arguments = parse_arguments(argv[1:])
+
+    if arguments.command == "assemble":
+        assemble(arguments.assembly_file)
+
+    elif arguments.command == "execute":
+        execute(arguments.executable_file)
+
+    elif arguments.command == "debug":
+        debug(arguments.executable_file)
+
+    elif arguments.command == "about":
+        version()
