@@ -8,7 +8,8 @@
 #
 
 
-from rasp.machine import Load, RASP
+from rasp.instructions import Load
+from rasp.machine import RASP
 
 
 class DebugUI:

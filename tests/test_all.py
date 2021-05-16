@@ -8,8 +8,8 @@
 #
 
 
-from rasp.machine import RASP, Print, Halt, Read, Load, Add, Subtract, JumpIfPositive, Store, \
-    Profiler, Parser
+from rasp.instructions import Print, Halt, Read, Load, Add, Subtract, JumpIfPositive, Store
+from rasp.machine import RASP, Profiler
 
 from tests.fakes import FakeInputDevice, FakeOutputDevice
 
@@ -151,90 +151,3 @@ class TestRASP(TestCase):
         self.machine.run()
 
         self.assertEqual(122, self.journal.values[0])
-
-
-
-class TestParser(TestCase):
-
-    def setUp(self):
-        self.parser = Parser()
-
-    def test_parse_print(self):
-        program = self.parser.parse("PRINT 23")
-
-        self.assertEqual(1, len(program))
-        self.assertEqual(Print(23), program[0])
-
-    def test_parse_load(self):
-        parser = Parser()
-
-        program = self.parser.parse("LOAD 100\n"
-                               "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Load(100), program[0])
-
-    def test_parse_command_with_comment(self):
-        program = self.parser.parse("LOAD 100 ; this is a dummy comment!\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Load(100), program[0])
-
-    def test_parse_commented_line(self):
-        program = self.parser.parse("LOAD 100 ; this is a dummy comment!\n"
-                                    "PRINT 34\n"
-                                    ";;LOAD 50\n ; this line is out")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Load(100), program[0])
-
-    def test_parse_jump(self):
-        program = self.parser.parse("JUMP 100\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(JumpIfPositive(100), program[0])
-
-    def test_parse_halt(self):
-        program = self.parser.parse("HALT\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Halt(), program[0])
-
-
-    def test_parse_store(self):
-        program = self.parser.parse("STORE 234\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Store(234), program[0])
-
-    def test_parse_add(self):
-        program = self.parser.parse("ADD 234\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Add(234), program[0])
-
-    def test_parse_subtract(self):
-        program = self.parser.parse("SUBTRACT 234\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Subtract(234), program[0])
-
-    def test_parse_read(self):
-        program = self.parser.parse("READ 234\n"
-                                    "PRINT 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Read(234), program[0])
-
-    def test_parse_lowercase(self):
-        program = self.parser.parse("read 234\n"
-                                    "print 34\n")
-
-        self.assertEqual(2, len(program))
-        self.assertEqual(Read(234), program[0])

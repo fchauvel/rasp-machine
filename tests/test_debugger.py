@@ -10,7 +10,8 @@
 
 from rasp.debugger import Break, Debugger, Quit, SetAccumulator, SetMemory, \
     SetInstructionPointer, ShowCPU, ShowMemory, ShowSource, Step
-from rasp.machine import Add, Halt, Load, Print, RASP, Read, Store
+from rasp.instructions import Add, Halt, Load, Print, Read, Store
+from rasp.machine import RASP
 from rasp.assembler import ProgramMap
 
 from tests.fakes import FakeInputDevice

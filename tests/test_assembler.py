@@ -11,26 +11,11 @@
 
 from rasp.assembler import Assembler, AssemblyParser, AssemblyProgram, Declaration, \
     Operation
-from rasp.machine import Add, Halt, Load, Print, Read, Store
+from rasp.instructions import Add, Halt, Load, Print, Read, Store
 
 from unittest import TestCase
 
 
-
-class SymbolTableTests(TestCase):
-
-
-    def test_finding_address(self):
-        pass
-
-    def test_finding_source(instruction_address):
-        # Should store the instruction address, when we calculate it.
-        # No!! Symbol tables only contains the symbols (i.e., either
-        # labels or variable, and the address where they have beem
-        # declared)
-
-
-        pass
 
 
 class AssemblyCodeParsingTests(TestCase):
