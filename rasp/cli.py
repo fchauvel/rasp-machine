@@ -12,8 +12,9 @@ import logging
 
 from rasp import About
 from rasp.debugger import Debugger
-from rasp.assembler import Assembler, AssemblyParser, ProgramMap
-from rasp.loader import Loader
+from rasp.assembly.parser import AssemblyParser
+from rasp.assembler import Assembler, ProgramMap
+from rasp.executable import Loader
 from rasp.machine import RASP, Profiler
 
 from pathlib import Path
@@ -98,32 +99,38 @@ class CLI:
         self._format(f"   \u2514\u2500 Output: {value}")
 
 
-def assemble(assembly_file):
-    parser = AssemblyParser()
-    with open(assembly_file, "r") as source:
-        program = parser.parse(source.read())
+class Controller:
 
-    assembler = Assembler()
-    layout = assembler.assemble(program)
+    ASSEMBLE = 1
+    DEBUG = 2
+    EXECUTE = 3
+    VERSION = 4
 
-    executable = Path(assembly_file).with_suffix(".rx")
-    with open(executable, "w") as output:
-        output.write(" ".join(str(each) for each in layout))
+    def __init__(self):
+        self._assembler = Assembler()
+        self._load = Loader()
+        self._assembly = AssemblyParser
+
+    def assemble(self, assembly_file):
+        program = self._assembly.read_file(assembly_file)
+
+        executable = self._assembler.assemble(program)
+
+        self._load.save_as(executable,
+                           Path(assembly_file).with_suffix(".rx"))
 
 
-def debug(executable_file):
+    def debug(self, executable_file):
+        assembly_file = Path(executable_file).with_suffix(".asm")
+        with open(assembly_file, "r") as assembly:
+            source_code = assembly.read()
 
-    assembly_file = Path(executable_file).with_suffix(".asm")
-    with open(assembly_file, "r") as assembly:
-        source_code = assembly.read()
-
-    with open(executable_file, "r") as code:
         cli = CLI()
         machine = RASP(input_device=cli, output_device=cli)
         profiler = Profiler()
         machine.cpu.attach(profiler)
         machine.memory.attach(profiler)
-        debug_infos = Loader().from_stream(machine.memory, code)
+        debug_infos = self._load.from_file(machine.memory, executable_file)
 
         debugger = Debugger(machine, cli, debug_infos, source_code)
         cli.show_opening()
@@ -141,24 +148,23 @@ def debug(executable_file):
         cli.show_closing()
 
 
-def execute(executable_file):
-    machine = RASP()
-    profiler = Profiler()
-    machine.cpu.attach(profiler)
-    machine.memory.attach(profiler)
-    with open(executable_file, "r") as code:
-        load = Loader()
-        load.from_stream(machine.memory, code)
-        machine.run()
-    print("---")
-    print(f"Time: {profiler.cycle_count} cycle(s)")
-    print(f"Memory: {profiler.used_memory} cell(s)")
+    def execute(self, executable_file):
+        machine = RASP()
+        profiler = Profiler()
+        machine.cpu.attach(profiler)
+        machine.memory.attach(profiler)
+        with open(executable_file, "r") as code:
+            self._load.from_stream(machine.memory, code)
+            machine.run()
+        print("---")
+        print(f"Time: {profiler.cycle_count} cycle(s)")
+        print(f"Memory: {profiler.used_memory} cell(s)")
 
 
-def version():
-    print(f"{About.NAME} {About.VERSION} -- {About.DESCRIPTION}")
-    print(f"{About.COPYRIGHT}")
-    print(f"{About.LICENSE} license")
+    def version(self):
+        print(f"{About.NAME} {About.VERSION} -- {About.DESCRIPTION}")
+        print(f"{About.COPYRIGHT}")
+        print(f"{About.LICENSE} license")
 
 
 
@@ -178,25 +184,26 @@ def parse_arguments(command_line):
     assembler.add_argument("assembly_file",
                            metavar="FILE",
                            help="The RASP assembly file to compile to machine code")
-    assembler.set_defaults(command='assemble')
+    assembler.set_defaults(command=Controller.ASSEMBLE)
 
     debugger = subparsers.add_parser("debug",
                                      help='starts the interactive debugger')
 
-    assembler.add_argument("executable_file",
+    debugger.add_argument("executable_file",
                            metavar="FILE",
                            help="The RASP executable file to compile to debug")
+    debugger.set_defaults(command=Controller.DEBUG)
 
     runner = subparsers.add_parser("execute",
                                    help='execute the given RASP executable file')
     runner.add_argument("executable_file",
                            metavar="FILE",
                            help="The RASP executable file to compile to debug")
-    runner.set_defaults(command="execute")
+    runner.set_defaults(command=Controller.EXECUTE)
 
     about = subparsers.add_parser("version",
                                   help="show version, license and other details")
-    about.set_defaults(command="about")
+    about.set_defaults(command=Controller.VERSION)
 
     return parser.parse_args(command_line)
 
@@ -206,16 +213,17 @@ def main():
 
     logging.basicConfig(filename='rasp.log', level=logging.INFO)
 
+    rasp = Controller()
     arguments = parse_arguments(argv[1:])
 
-    if arguments.command == "assemble":
-        assemble(arguments.assembly_file)
+    if arguments.command == Controller.ASSEMBLE:
+        rasp.assemble(arguments.assembly_file)
 
-    elif arguments.command == "execute":
-        execute(arguments.executable_file)
+    elif arguments.command == Controller.EXECUTE:
+        rasp.execute(arguments.executable_file)
 
-    elif arguments.command == "debug":
-        debug(arguments.executable_file)
+    elif arguments.command == Controller.DEBUG:
+        rasp.debug(arguments.executable_file)
 
-    elif arguments.command == "about":
-        version()
+    elif arguments.command == Controller.VERSION:
+        rasp.version()

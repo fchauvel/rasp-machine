@@ -17,6 +17,12 @@ class Loader:
 
     NO_LABEL = "?"
 
+
+    def from_file(self, memory, file_name):
+        with open(file_name, "r") as file_stream:
+            return self.from_stream(memory, file_stream)
+
+
     def from_text(self, memory, text):
         return self.from_stream(memory, StringIO(text))
 
@@ -52,3 +58,9 @@ class Loader:
             debug_infos.record(line_number, memory_address, label)
             index += 3
         return debug_infos
+
+
+    @staticmethod
+    def save_as(data, file_name):
+        with open(file_name, "w") as rx_file:
+                rx_file.write(" ".join(str(each) for each in data))

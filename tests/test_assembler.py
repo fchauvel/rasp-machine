@@ -9,12 +9,13 @@
 
 
 
-from rasp.assembler import Assembler, AssemblyParser, AssemblyProgram, Declaration, \
-    Operation
+from rasp.assembly.ast import AssemblyProgram, Declaration, Operation
+
+from rasp.assembly.parser import AssemblyParser
+from rasp.assembler import Assembler
 from rasp.instructions import Add, Halt, Load, Print, Read, Store
 
 from unittest import TestCase
-
 
 
 

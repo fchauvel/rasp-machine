@@ -9,7 +9,7 @@
 
 
 from rasp.machine import Memory
-from rasp.loader import Loader
+from rasp.executable import Loader
 
 from unittest import TestCase
 
