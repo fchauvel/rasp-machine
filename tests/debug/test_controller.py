@@ -32,7 +32,7 @@ class CommandParserTest(TestCase):
 
     def test_set_memory(self):
         self.verify(SetMemory(25, -10),
-                    "set mem 25 -10")
+                    "set memory 25 -10")
 
     def test_break(self):
         self.verify(Break(24),
@@ -46,7 +46,7 @@ class CommandParserTest(TestCase):
 
     def test_show_memory(self):
         self.verify(ShowMemory(10, 30),
-                    "show mem 10 30")
+                    "show memory 10 30")
 
     def test_show_cpu(self):
         self.verify(ShowCPU(), "show cpu")

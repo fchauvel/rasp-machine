@@ -20,10 +20,6 @@ import pyparsing as pp
 class DebugController:
 
 
-    @staticmethod
-    def prepare(debug_infos, assembly_code):
-
-
     def __init__(self, debugger, view):
         self._debugger = debugger
         self._view = view
@@ -40,7 +36,7 @@ class DebugController:
                 continue
             if command.is_quit():
                 break
-            command.send_to(self._debugger)
+            command.send_to(self._debugger, self._view)
         self._view.show_closing()
 
 
@@ -65,7 +61,7 @@ class DebugController:
         ).setParseAction(lambda tokens: SetAccumulator(tokens[0]))
 
         set_mem = (
-            pp.Suppress("set") + pp.Suppress("mem") + address + integer
+            pp.Suppress("set") + pp.Suppress("memory") + address + integer
         ).setParseAction(lambda tokens: SetMemory(tokens[0], tokens[1]))
 
         break_at = (
@@ -89,7 +85,7 @@ class DebugController:
         ).setParseAction(lambda tokens: Quit())
 
         show_mem = (
-            pp.Suppress("show") + pp.Suppress("mem") + address + address
+            pp.Suppress("show") + pp.Suppress("memory") + address + address
         ).setParseAction(lambda tokens: ShowMemory(tokens[0], tokens[1]))
 
         show_breakpoints = (
@@ -108,10 +104,16 @@ class DebugController:
             pp.Suppress("show") + identifier
         ).setParseAction(lambda tokens: ShowSymbol(tokens[0]))
 
+        help_me = (
+            pp.Suppress("help")
+        ).setParseAction(lambda tokens: Help())
+
         command = (
             set_ip | set_acc | set_mem \
+            | help_me \
             | break_at | clear | step | stop | run \
             | show_mem | show_cpu | show_source | show_breakpoints | show_symbol
+
         )
 
         return command.parseString(text)[0]
@@ -119,11 +121,23 @@ class DebugController:
 
 class Command:
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         pass
 
     def is_quit(self):
         return False
+
+
+class Help(Command):
+
+    def __init__(self):
+        super().__init__()
+
+    def send_to(self, debugger, view):
+        view.show_help()
+
+    def __eq__(self, other):
+        return isinstance(_other, Help)
 
 
 class SetInstructionPointer(Command):
@@ -132,7 +146,7 @@ class SetInstructionPointer(Command):
         super().__init__()
         self._address = address
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.set_instruction_pointer(self._address)
 
     def __eq__(self, other):
@@ -147,7 +161,7 @@ class SetAccumulator(Command):
         super().__init__()
         self._value = value
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.set_accumulator(self._value)
 
     def __eq__(self, other):
@@ -163,7 +177,7 @@ class SetMemory(Command):
         self._address = address
         self._value = value
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.set_memory(self._address, self._value)
 
     def __eq__(self, other):
@@ -180,7 +194,7 @@ class Break(Command):
         self._address = address
         self._is_line_number = is_line_number
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         if self._is_line_number:
             debugger.set_breakpoint_at_line(self._address)
         else:
@@ -199,7 +213,7 @@ class Clear(Command):
         self._address = address
         self._is_line_number = is_line_number
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         if self._is_line_number:
             debugger.clear_breakpoint_at_line(self._address)
         else:
@@ -218,7 +232,7 @@ class ShowMemory(Command):
         self._start = start
         self._end = end
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.show_memory(self._start, self._end)
 
     def __eq__(self, other):
@@ -234,7 +248,7 @@ class ShowSource(Command):
         self._start = start
         self._end = end
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.show_source(self._start, self._end)
 
     def __eq__(self, other):
@@ -250,7 +264,7 @@ class ShowSymbol(Command):
         super().__init__()
         self._symbol = symbol
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.show_symbol(self._symbol)
 
     def __eq__(self, other):
@@ -264,7 +278,7 @@ class ShowBreakpoints(Command):
     def __init__(self):
         super().__init__()
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.show_breakpoints()
 
     def __eq__(self, other):
@@ -276,7 +290,7 @@ class ShowCPU(Command):
     def __init__(self):
         super().__init__()
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.show_cpu()
 
     def __eq__(self, other):
@@ -289,7 +303,7 @@ class Step(Command):
         super().__init__()
         self._step_count = step_count or 1
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.step(self._step_count)
 
     def __eq__(self, other):
@@ -301,7 +315,7 @@ class Quit(Command):
     def __init__(self):
         super().__init__()
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         pass
 
     def is_quit(self):
@@ -316,7 +330,7 @@ class Run(Command):
     def __init__(self):
         super().__init__()
 
-    def send_to(self, debugger):
+    def send_to(self, debugger, view):
         debugger.run()
 
     def __eq__(self, other):
