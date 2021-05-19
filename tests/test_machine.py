@@ -24,27 +24,6 @@ class TestRASP(TestCase):
         self.machine = RASP(self.user,
                             self.journal)
 
-    def test_profiler(self):
-        profiler = Profiler()
-        self.machine.memory.attach(profiler)
-        self.machine.cpu.attach(profiler)
-
-        self.machine.memory.load_program(
-            Load(45),
-            JumpIfPositive(4*2),
-            Print(50),
-            Store(50),
-            Print(50),
-            Halt()
-        )
-        self.machine.memory.write(50, 25)
-
-        self.machine.run()
-
-        self.assertEqual(1, len(self.journal.values))
-        self.assertEqual(6 * 2 + 1, profiler.used_memory)
-        self.assertEqual(4, profiler.cycle_count)
-
     def test_print_an_address(self):
         self.machine.memory.load_program(
             Print(10))

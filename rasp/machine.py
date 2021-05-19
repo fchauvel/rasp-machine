@@ -34,7 +34,10 @@ class Memory:
             each_observer.on_write(address, value)
 
     def read(self, address):
-        return self._cells[address]
+        value = self._cells[address]
+        for each_observer in self._observers:
+            each_observer.on_read(address, value)
+        return value
 
 
 class CPU:
@@ -49,7 +52,7 @@ class CPU:
 
     def tick(self, count):
         for each_observer in self._observers:
-            each_observer.on_new_cpu_cycle(count)
+            each_observer.on_new_cpu_cycle(count, self.instruction_pointer)
 
     def __str__(self):
         return f"[ACC={self.accumulator} IP={self.instruction_pointer}]"
@@ -67,8 +70,6 @@ class OutputDevice:
 
     def write(self, value):
         print(value)
-
-
 
 
 
@@ -107,19 +108,52 @@ class RASP:
 class Profiler:
 
     def __init__(self):
-        self._used_memory_cells = set();
-        self._cpu_cycle = 0
+        self._memory = {}
 
     @property
     def used_memory(self):
-        return len(self._used_memory_cells);
-
-    def on_write(self, address, value):
-        self._used_memory_cells.add(address)
-
-    def on_new_cpu_cycle(self, count=1):
-        self._cpu_cycle += count
+        return sum(min(1, each[2])for each in self._memory.values())
 
     @property
     def cycle_count(self):
-        return self._cpu_cycle
+        return sum(each[3] for each in self._memory.values())
+
+    def on_read(self, address, value):
+        self._record(address, +1, 0, 0)
+
+    def on_write(self, address, value):
+        self._record(address, 0, +1, 0)
+
+    def on_new_cpu_cycle(self, count=1, ip=0):
+        self._record(ip, 0, 0, +1)
+
+    def _record(self, address, new_reads, new_writes, new_executions):
+        if not address in self._memory:
+            self._memory[address] = (address, 0, 0, 0)
+        address, reads, writes, executions = self._memory[address]
+        self._memory[address] = (address,
+                                 reads + new_reads,
+                                 writes + new_writes,
+                                 executions + new_executions)
+    @property
+    def instruction_coverage(self):
+        results = [ (address, executions)
+                    for address, reads, writes, executions in self._memory.values()
+                    if executions > 0]
+        return sorted(results, key=lambda i: i[0])
+
+    @property
+    def memory_coverage(self):
+        results = [ (address, reads, writes)
+                    for address, reads, writes, executions in self._memory.values() ]
+        return sorted(results, key=lambda i: i[0])
+
+
+    def save_results_as(self, file_name):
+        with open(file_name, "w") as destination:
+            destination.write("#address, reads, writes, executions\n")
+            for address, reads, writes, runs in self._as_table():
+                destination.write(f"{address},{reads},{writes},{runs}\n")
+
+    def _as_table(self):
+        return sorted(self._memory.values(), key=lambda t: t[0])

@@ -58,17 +58,20 @@ class Controller:
         session.start()
 
 
-    def execute(self, executable_file):
+    def execute(self, executable_file, use_profiler=False):
         machine = RASP()
-        profiler = Profiler()
-        machine.cpu.attach(profiler)
-        machine.memory.attach(profiler)
+        if use_profiler:
+            profiler = Profiler()
+            machine.cpu.attach(profiler)
+            machine.memory.attach(profiler)
         with open(executable_file, "r") as code:
             self._load.from_stream(machine.memory, code)
             machine.run()
-        print("---")
-        print(f"Time: {profiler.cycle_count} cycle(s)")
-        print(f"Memory: {profiler.used_memory} cell(s)")
+
+        if use_profiler:
+            data_file = Path(executable_file).with_suffix(".perf")
+            profiler.save_results_as(data_file)
+
 
 
     def version(self):
@@ -106,6 +109,9 @@ def parse_arguments(command_line):
 
     runner = subparsers.add_parser("execute",
                                    help='execute the given RASP executable file')
+    runner.add_argument("--use-profiler", "-p",
+                           help="Profile the CPU & memory usage of the program",
+                           action="store_true")
     runner.add_argument("executable_file",
                            metavar="FILE",
                            help="The RASP executable file to compile to debug")
@@ -130,7 +136,8 @@ def main():
         rasp.assemble(arguments.assembly_file)
 
     elif arguments.command == Controller.EXECUTE:
-        rasp.execute(arguments.executable_file)
+        rasp.execute(arguments.executable_file,
+                     arguments.use_profiler)
 
     elif arguments.command == Controller.DEBUG:
         rasp.debug(arguments.executable_file)
