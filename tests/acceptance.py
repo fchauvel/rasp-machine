@@ -11,8 +11,9 @@
 
 from pathlib import Path
 
-from rasp.assembler import Assembler, AssemblyParser
-from rasp.loader import Loader
+from rasp.assembly.parser import AssemblyParser
+from rasp.assembler import Assembler
+from rasp.executable import Loader
 from rasp.machine import RASP
 
 from tests.fakes import FakeInputDevice, FakeOutputDevice
@@ -72,6 +73,7 @@ class YAMLKeys:
     TESTS = "tests"
     PROGRAM = "program"
 
+
 class Library:
 
     def __init__(self, directory):
@@ -130,7 +132,7 @@ class Generator:
 
 
 def load_tests(loader, tests, pattern):
-    repository = Library("tests/acceptance/scenarios")
+    repository = Library("tests/acceptance")
     generate = Generator(repository)
     suite = TestSuite()
     for each_test_case in generate.all_test_cases():
