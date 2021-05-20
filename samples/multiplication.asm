@@ -2,14 +2,12 @@
 ;; the result on the output device.
 
 segment: data
-                left    1       0       ; the left operand 501
-                right   1       0       ; the right operand 502
-                counter 1       0       ; counter 503
-                result  1       0       ; the result 5+4
+                left    1       12       ; the left operand
+                right   1       5      ; the right operand
+                counter 1       0       ; counter
+                result  1       0       ; the result
 
 segment: code
-                read            left    ; left
-                read            right   ; right
         loop:   load            0       ;
                 add             counter
                 subtract        right   ;
