@@ -151,7 +151,7 @@ class Profiler:
 
     def save_results_as(self, file_name):
         with open(file_name, "w") as destination:
-            destination.write("#address, reads, writes, executions\n")
+            destination.write("address, reads, writes, executions\n")
             for address, reads, writes, runs in self._as_table():
                 destination.write(f"{address},{reads},{writes},{runs}\n")
 
