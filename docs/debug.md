@@ -1,9 +1,9 @@
 # How to Debug?
 
 Writing assembly code, especially when we are learning, is not
-necessarily straightforward. To ease the development, RASP provide a
-simple debugger that let you run your programs step by step,
-scrutinizing the memory and the CPU as you need.
+necessarily straightforward. To ease the development, RASP provides a
+simple debugger that let you run your programs step by step, while
+scrutinizing the memory and the CPU.
 
 ## Enabling Debugging
 
@@ -37,6 +37,14 @@ $ rasp debug multiplication.rx
  ┼ debug > quit
 ```
 
+If the original source code is in a different directory, you can
+specify it to the debugger by using the `--asm-source|-s` option as
+follows:
+
+```shell-session
+$ rasp debug --asm-source src/multiplcation.asm multiplication.rx
+```
+
 ## Execution
 
  * `step [number]?`. Execute the given `number` of instruction,
@@ -52,7 +60,20 @@ $ rasp debug multiplication.rx
  
  * `quit`. Quit the current debugger session. All state is discarded.
 
+ * `break at address <address>`. Set a breakpoint at the given address.
+ 
+ * `break at line <line-number>`. Set a breakpoint at the given line,
+   provided the assembly source is available.
+   
+ * `show breaks` list all the break points defined so far.
 
+ * `clear address <address>` remove the breakpoint set at the given
+   address
+   
+ * `clear line <line-number>` remove the breakpoint set at the given
+   line, provided the assembly source code is available.
+   
+   
 ## Assembly Source File
 
 * `show source [from-line]? [to-line]?` Show the assembly source code
@@ -61,6 +82,9 @@ $ rasp debug multiplication.rx
   10 lines from the given `from-line` number. If both `from-line`and
   `to-line`are omitted, it shows 10 lines around the current location
   (i.e., the current value IP).
+  
+* `show <symbol>`. Show the memory associated with the given symbol.
+
 
 ## CPU
 
@@ -73,15 +97,8 @@ $ rasp debug multiplication.rx
 
 ## Memory
 
- * `show memory <from-address> <to-address>`. Show the content of the
+ * `show memory <from:address> <to:address>`. Show the content of the
    memory for the given range of address (both ends are included).
- 
- * `show <symbol>`. Show the memory associated with the given symbol.
- 
+  
 
- * `break at [a:XXX|l:XXX]`. Set a breakpoint, either at a given
-   address (using `a:XXX`) or at a line of the assembly source code
-   (using `l:XXX`).
-   
- * `show breaks` list all the break points defined so far.
 

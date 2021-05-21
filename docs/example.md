@@ -39,10 +39,10 @@ segment: code
 ```
 
 This code cannot be directly run on the RASP machine. To do so, we
-need to produce an "executable", that is a sequence of integer that
-we can then load into memory. Provided we save the code above in a
-file named `multiplication.asm`, we can assemble it into such a "RASP
-executable" file using:
+need to produce "machine code" (i.e., an executable file), that is a
+sequence of integers that we can then load into memory. Provided we
+save the code above in a file named `multiplication.asm`, we can
+assemble it into such a "RASP executable" file using:
 
 ```shell-session
 $ rasp assemble samples/multiplication.asm
