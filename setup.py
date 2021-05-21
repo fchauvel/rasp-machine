@@ -26,9 +26,13 @@ setup(
     install_requires=[
         "argparse==1.4.0"
     ],
-    tests_require=[
-        "pyyaml==5.4.1"
-    ],
+    extras_require={
+          "test": [
+              "pytest==6.2.4",
+              "coverage==5.5",
+              "pyyaml==5.4.1",
+          ]
+      },
     entry_points={
         'console_scripts': [
             'rasp = rasp.cli:main'
