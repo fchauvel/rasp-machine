@@ -1,80 +1,84 @@
 #+TITLE: Random Access Stored Procedure Machine
 #+AUTHOR: Franck Chauvel
 
-This is a small Python3 application that implements the Random access
-stored procedure machine, as designed by Cook & Reckhow in
-1973 [fn:cook1973]. I developed this as a companion tool for a course
-in algorithm & data structure, where it helps (I hope) to with
-understanding computation models, growth orders and the applicability
-of the Big-O notation.
+This is Python3 emulator for the random access stored procedure
+machine (RASP) designed by Cook & Reckhow in 1973 [fn:cook1973]. I
+developed this as a companion tool for a course in algorithm & data
+structure, where it helps (I hope) to with understanding computation
+models, growth orders and the applicability of the Big-O notation.
 
-* Example: Multiplying Two Numbers
+In a nutshell, the RASP machine is a mini computer with eight
+instructions, two registers (an accumulator and instruction pointer),
+and an I/O device. As a computation model, it closely resembles an
+actual computer, as opposed to a Turing machine for instance.
 
-#+begin_src asm
-;; Read two numbers on from the input device, multiply them and return
-;; the result on the output device.
+** How to install RASP?
 
+The simplest way to install the latest version is to use PyPI as
+follows:
+
+#+begin_src shell
+  $ pip install rasp-machine
+#+end_src
+
+Refer to the [[https://fchauvel.github.com/rasp-machine][documentation]] for a alternative ways to install RASP.
+
+** How to use the RASP machine?
+
+*** A Simple Program: Adding Two Integers
+
+Let us consider a tiny program for the rasp machine. To simplify
+writing programs, RASP provides a simple assembly language, as shown
+below, with the code needed to read two integers from the I/O device
+and to print their sum back onto it.
+
+#+begin_example
 segment: data
-                left    1       0       ; the left operand 501
-                right   1       0       ; the right operand 502
-                counter 1       0       ; counter 503
-                result  1       0       ; the result 5+4
+   left     1       0
+   right    1       0
+   result   1       0
 
 segment: code
-                read            left    ; left
-                read            right   ; right
-        loop:   load            0       ;
-                add             counter
-                subtract        right   ;
-                jump            done    ; if counter - right >= 0, goto done
-                load            0
-                add             result
-                add             left
-                store           result  ; result += left
-                load            1
-                add             counter
-                store           counter ; counter += 1
-                load            0
-                jump            loop    ; goto loop
-        done:   print           result
-                halt            -1
-#+end_src
+   start:   read    left      ;; left = user_input()
+            read    right     ;; right = user_input()
+            load    0
+            add     left
+            add     right
+            store   result    ;; result = left + right
+            halt    -1
+#+end_example
 
-This code cannot be directly run on the RASP machine. To do so, we
-need to produce an "executable", that is a sequence of integer that
-we can then load into memory. Provided we save the code above in a
-file named ~multiplication.asm~, we can assemble it into such a "RASP
-executable" file using:
+Provided we save the code above into a file named ~addition.asm~, we
+can get the associated machine code, using the following command
+#+begin_src shell
+  $ rasp assemble addition.asm
+  Machine code saved in 'addition.rx'
+#+end_Src
 
-#+begin_src console
-$ rasp assemble samples/multiplication.asm
-#+end_src
+Note that the option ~--debug~ will yield machine code that contains
+debugging information, useful when using the debugger.
 
-This yields a file named ~multiplication.rx~ that contains a sequence
-of integer that we can now load into our RASP machine and run.
+*** Debugging & Executing RASP
 
-#+begin_src
-2 32 2 33 8 0 3 34 5 33 6 30 8 0 3 35 3 32 4 35 8 1 3 34 4 34 8 0 6 4 1 35 0 0 0 0
-#+end_src
+Now we have the machine code, we can execute it using the following commands:
 
-To run this file, we simply invoke ~rasp execute~ as follows.
-#+begin_src console
-$ rasp execute multiplication.rx
+#+begin_src shell
+$ rasp execute addition.rx
 rasp? 10
 rasp? 20
-200
----
-Time: 268 cycle(s)
-Memory: 36 cell(s)
+30
 #+end_src
 
-* Assembly Syntax
-  
-* Using RASP
+Note that you can extract some performance measure (CPU cycle, read,
+writes, etc.) using the ~--use-profiler~ option.
 
-* Instruction Cost Models
-
-  
+Should there be any problem with the execution, we can start the
+associated debugger with the command:
+#+begin_src shell
+$ rasp debug addition.rx
+RASP-Machine 0.1.0
+ ┼ debug >
+#+end_src
 
 [fn:cook1973] Cook, Stephen A., and Robert A. Reckhow. "Time bounded
 random access machines." Journal of Computer and System Sciences 7,
