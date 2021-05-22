@@ -22,18 +22,17 @@ from rasp.machine import RASP, Profiler
 from pyparsing import ParseException
 from pathlib import Path
 
-from sys import argv
+from sys import argv, stdout
 
 
 
 class Presenter:
 
     def __init__(self, output=None):
-        self._output = output or sys.stdout
+        self._output = output or stdout
 
-
-    def _print(self, text):
-        self._output.write(text)
+    def _print(self, text, end="\n"):
+        self._output.write(text + end)
 
     def syntax_error(self, error):
         self._print(f"Syntax Error.")
@@ -247,8 +246,6 @@ class Controller:
 
 
 def main():
-    from sys import argv, stdout
-
     logging.basicConfig(filename='rasp.log', level=logging.INFO)
 
     rasp = Controller(stdout)

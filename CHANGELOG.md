@@ -10,6 +10,7 @@
 
     -   Fix missing dependency on pyparsing (v2.4.7)   
     -   Fix error when rasp is invoked without any command
+    -   Fix missing output on the CLI
 
 ## RASP-Machine v0.1.1 (May 22, 2021)
 
