@@ -14,20 +14,32 @@ from rasp import About
 from setuptools import setup, find_packages
 
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 
 setup(
     name=About.NAME,
     version=About.VERSION,
-    url='https://github.com/fchauvel/rasp.git',
+    url="https://github.com/fchauvel/rasp-machine",
     author='Franck Chauvel',
     author_email='franck.chauvel@gmail.com',
     description='Emulator for the RASP machines proposed by Cook & Reckow in 1973',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=find_packages(exclude='tests'),
+    project_urls={
+        "Documentation": "https://fchauvel.github.io/rasp-machine",
+        "Bug Tracker": "https://github.com/fchauvel/rasp-machine/issues"
+    },
+    python_requires=">=3.6",
     install_requires=[
         "argparse==1.4.0"
     ],
     extras_require={
-          "test": [
+          "dev": [
+              "build==0.3.1",
+              "twine==3.4.1",
               "pytest==6.2.4",
               "coverage==5.5",
               "pyyaml==5.4.1",
