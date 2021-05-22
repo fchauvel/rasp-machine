@@ -14,7 +14,7 @@ class About:
 
     CLI_PROGRAM = "rasp"
 
-    VERSION = "0.1.1"
+    VERSION = "0.1.2"
 
     COPYRIGHT = "Copyright (C) 2021, Franck Chauvel"
 

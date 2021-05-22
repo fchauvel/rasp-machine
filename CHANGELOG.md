@@ -6,6 +6,8 @@
 -   Feel free to report problems or suggest features on our [issue
     tracker](https://github.com/fchauvel/rasp-machine/issues).
 
+## Rasp-Machine v0.1.2 (May 22, 2021)
+
 -   Bug Fixes
 
     -   Fix missing dependency on pyparsing (v2.4.7)   
