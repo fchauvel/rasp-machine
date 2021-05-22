@@ -75,3 +75,56 @@ jobs:
       - name: Build distribution
         run: |
           python -m build
+
+      - name: Archive binaries
+        uses: actions/upload-artifact@v2
+        with:
+          name: distribution
+          path: |
+            dist
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    if: github.event.base_ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine
+          
+      - name: Fetch the binaries to publish
+        uses: actions/download-artifact@v2
+        with:
+          name: distribution
+          path: |
+            dist 
+
+      - name: Check the binaries 
+        run: |
+          ls -l
+          twine check dist/*
+
+      - name: Publish to Test PyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: "https://test.pypi.org/legacy/"
+        run: |
+          echo KEY: '${TWINE_PASSWORD}'
+          twine check dist/*
+          twine upload --verbose --skip-existing dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+        run: |
+          echo KEY: '${TWINE_PASSWORD}'
+          twine upload --verbose --skip-existing dist/*
