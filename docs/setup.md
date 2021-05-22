@@ -19,4 +19,12 @@ $ cd rasp-machine
 $ pip install -e . 
 ```
 
+## Contributing
+
+If you want to modify the source code, make sure to install also the
+development dependencies using:
+
+```shell-session
+$ pip install -e .[dev]
+```
 
