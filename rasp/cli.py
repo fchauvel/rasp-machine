@@ -202,6 +202,7 @@ class Controller:
         parser = ArgumentParser(
             prog=About.CLI_PROGRAM,
             description=About.DESCRIPTION)
+        parser.set_defaults(command=Controller.VERSION)
 
         subparsers = parser.add_subparsers(title="Available commands")
         assembler = subparsers.add_parser("assemble",
