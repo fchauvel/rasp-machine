@@ -1,7 +1,13 @@
-# Random Access Stored Procedure Machine
+# RASP Machines
 
+[![last release on PyPI](https://img.shields.io/pypi/v/RASP-machine.svg)](https://pypi.python.org/pypi/RASP-Machine)
+[![License](https://img.shields.io/pypi/l/RASP-Machine.svg)](https://en.wikipedia.org/wiki/MIT_License)
+[![Build status](https://img.shields.io/github/workflow/status/fchauvel/rasp-machine/test-package-publish)](https://github.com/fchauvel/rasp-achine/actions)
+[![Code coverage](https://img.shields.io/codecov/c/github/fchauvel/rasp-machine/main.svg)](https://codecov.io/gh/fchauvel/rasp-machine)
+[![Code quality](https://img.shields.io/codacy/grade/132a989754b14fb085d76d7a63f10bc4.svg)](https://www.codacy.com/app/fchauvel/rasp-machine/dashboard)
+[![Downloads](https://img.shields.io/pypi/dm/rasp-machine.svg)](https://pypistats.org/packages/rasp-machine)
 
-This is a small Python3 emulator for the random access stored
+This is a small Python&nbsp;3 emulator for the random access stored
 procedure machine (RASP) designed by Cook & Reckhow in 1973 below. I
 developed this as a companion tool for a course in algorithms & data
 structures, where it helps (I hope) to with understanding computation
@@ -39,18 +45,19 @@ and to print their sum back onto it.
 
 ```
 segment: data
-   left     1       0
-   right    1       0
-   result   1       0
+    left     1       0
+    right    1       0
+    result   1       0
 
 segment: code
-   start:   read    left      ;; left = user_input()
-            read    right     ;; right = user_input()
-            load    0
-            add     left
-            add     right
-            store   result    ;; result = left + right
-            halt    -1
+    read     left      ;; left = user_input()
+    read     right     ;; right = user_input()
+    load     0
+    add      left
+    add      right
+    store    result    ;; result = left + right
+    print    result
+    halt     -1
 ```
 
 Provided we save the code above into a file named `addition.asm`, we
