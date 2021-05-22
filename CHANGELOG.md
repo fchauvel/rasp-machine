@@ -8,7 +8,7 @@
     tracker](https://github.com/fchauvel/rasp-machine/issues).
 
 
-## RASP-Machine v0.1.0 (May 22, 2021)
+## RASP-Machine v0.1.1 (May 22, 2021)
 
 -   Features
 
