@@ -34,7 +34,8 @@ setup(
     },
     python_requires=">=3.6",
     install_requires=[
-        "argparse==1.4.0"
+        "argparse==1.4.0",
+        "pyparsing==2.4.7"
     ],
     extras_require={
           "dev": [
