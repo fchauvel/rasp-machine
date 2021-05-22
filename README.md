@@ -1,10 +1,10 @@
 # Random Access Stored Procedure Machine
 
 
-This is Python3 emulator for the random access stored procedure
-machine (RASP) designed by Cook & Reckhow in 1973 below. I
-developed this as a companion tool for a course in algorithm & data
-structure, where it helps (I hope) to with understanding computation
+This is a small Python3 emulator for the random access stored
+procedure machine (RASP) designed by Cook & Reckhow in 1973 below. I
+developed this as a companion tool for a course in algorithms & data
+structures, where it helps (I hope) to with understanding computation
 models, growth orders and the applicability of the Big-O notation.
 
 * Cook, Stephen A., and Robert A. Reckhow. "Time bounded random access
@@ -53,7 +53,7 @@ segment: code
             halt    -1
 ```
 
-Provided we save the code above into a file named ~addition.asm~, we
+Provided we save the code above into a file named `addition.asm`, we
 can get the associated machine code, using the following command
 ```shell-session
 $ rasp assemble addition.asm
